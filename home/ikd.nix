@@ -6,6 +6,11 @@
     homeDirectory = "/home/ikd";
     stateVersion = "26.05";
 
+    #現状はcodex(cli)用
+    sessionPath = [
+      "$HOME/.local/bin"
+    ];
+
     packages = with pkgs; [
       fd
       gh
@@ -28,11 +33,11 @@
       settings = {
         main = {
           term = "xterm-256color";
-          font = "Source Code Pro:size=8.5";
+          font = "Source Code Pro:size=10.5";
           pad = "0x0";
         };
 
-        colors = {
+        colors-dark = {
           alpha = 0.9;
           foreground = "d8dee9";
           background = "2e3440";

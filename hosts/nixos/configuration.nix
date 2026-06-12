@@ -21,6 +21,7 @@ let
     XDG_MUSIC_DIR="$HOME/Music"
     XDG_PICTURES_DIR="$HOME/Pictures"
     XDG_VIDEOS_DIR="$HOME/Videos"
+    XDG_PROJECTS_DIR="$HOME/Projects"
   '';
 in
 {
@@ -148,6 +149,7 @@ in
     "d /home/ikd/Downloads 0755 ikd users -"
     "d /home/ikd/Music 0755 ikd users -"
     "d /home/ikd/Pictures 0755 ikd users -"
+    "d /home/ikd/Projects 0755 ikd users -"
     "d /home/ikd/Public 0755 ikd users -"
     "d /home/ikd/Templates 0755 ikd users -"
     "d /home/ikd/Videos 0755 ikd users -"
@@ -163,6 +165,7 @@ in
     "r /home/ikd/音楽 - - - - -"
     "r /home/ikd/画像 - - - - -"
     "r /home/ikd/ビデオ - - - - -"
+    "r /home/ikd/プロジェクト - - - - -"
   ];
 
   # Install firefox.
