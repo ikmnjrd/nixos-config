@@ -1,0 +1,88 @@
+# 公開したくない情報はincludeで読み込めばよさそう
+# https://coderwall.com/p/z8m3mq/gitconfig-include
+# 今はまだない
+
+[filter "lfs"]
+	required = true
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+[user]
+	name = ike
+	email = 40803799+ikmnjrd@users.noreply.github.com
+[core]
+  editor = nvim
+[init]
+	defaultBranch = main
+[alias]
+  a    = add
+  aa   = add -A
+	s    = status
+	b    = branch
+  bd   = branch --delete
+  bds = "!f() { \
+           prefix=\"$1\"; \
+           git branch --list \"${prefix}*\" --format \"%(refname:short)\" | xargs -r git branch -d; \
+         }; f"
+
+  sw   = switch
+  swc  = switch -c
+  swp  = switch -
+
+	cm   = commit -m
+	ca   = commit --amend
+	can  = commit --amend --no-edit
+  cf   = commit --fixup
+
+  d    = diff --cached --name-only
+
+	r    = rebase
+  ra   = rebase --autosqush
+
+	pl   = pull
+  plr  = pull --rebase
+  plo = "!f() { git pull origin $(git symbolic-ref --short HEAD); git fetch -p; }; f"
+
+	ps   = push
+  pso = "!f() { git push origin $(git symbolic-ref --short HEAD); }; f"
+
+	lo   = log --oneline
+	logg = log --graph --all --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative
+
+  rename-js-to-ts = "!f() { git ls-files \"$1\"*.js | while read file; do git mv \"$file\" \"${file%.js}.ts\"; done; }; f"
+
+  # worktree
+  w    = worktree
+  wa   = worktree add
+  wl   = worktree list
+  wr   = worktree remove
+  wp   = worktree prune
+  wb   = "!f() { \
+           if [ -z \"$1\" ]; then \
+             echo \"Usage: git wb <name>\"; \
+             return 1; \
+           fi; \
+           CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD); \
+           NEW_BRANCH=\"${CURRENT_BRANCH}-${1}\"; \
+           SAFE_BRANCH_NAME=$(echo \"$CURRENT_BRANCH\" | sed 's/\\//-/g'); \
+           GIT_DIR=$(git rev-parse --git-dir); \
+           if [ \"$GIT_DIR\" = \".git\" ]; then \
+             WORKTREE_PATH=\".worktree-${SAFE_BRANCH_NAME}-${1}\"; \
+           else \
+             WORKTREE_PATH=\"$(dirname \"$GIT_DIR\")/.worktree-${SAFE_BRANCH_NAME}-${1}\"; \
+           fi; \
+           git worktree add -b \"$NEW_BRANCH\" \"$WORKTREE_PATH\" \"$CURRENT_BRANCH\"; \
+         }; f"
+  wd   = worktree remove .
+
+  # Pull Request
+  pr = "!f() { \
+         current_branch=$(git rev-parse --abbrev-ref HEAD); \
+         default_branch=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo 'main'); \
+         read -p 'PRタイトルを入力: ' title; \
+         read -p 'PRボディーを入力: ' body; \
+         gh pr create --base \"$default_branch\" --head \"$current_branch\" --title \"$title\" --body \"$body\"; \
+       }; f"
+
+[rebase]
+	autoStash = true

@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+host="nixos"
+flake="path:${root}#${host}"
+nix_flags=(--extra-experimental-features "nix-command flakes")
+if [[ -n "${NIX_CONFIG:-}" ]]; then
+  export NIX_CONFIG="${NIX_CONFIG}"$'\n'"experimental-features = nix-command flakes"
+else
+  export NIX_CONFIG="experimental-features = nix-command flakes"
+fi
+
+usage() {
+  cat <<'EOF'
+Usage: bin/nixos-config <command>
+
+Commands:
+  sync-from-etc  Show differences and import /etc/nixos into this repository
+  check           Evaluate the flake and NixOS configuration
+  build           Build the NixOS configuration without activating it
+  test            Activate temporarily; the change is lost after reboot
+  switch          Activate and make the configuration the boot default
+EOF
+}
+
+sync_from_etc() {
+  local source_dir="/etc/nixos"
+  local target_dir="${root}/hosts/${host}"
+  local changed=0
+  local file
+
+  for file in configuration.nix hardware-configuration.nix; do
+    if ! cmp -s "${source_dir}/${file}" "${target_dir}/${file}"; then
+      changed=1
+      diff -u "${target_dir}/${file}" "${source_dir}/${file}" || true
+    fi
+  done
+
+  if [[ "${changed}" -eq 0 ]]; then
+    echo "No differences from ${source_dir}."
+    return
+  fi
+
+  printf 'Import these changes into %s? [y/N] ' "${target_dir}"
+  read -r answer
+  case "${answer}" in
+    y|Y|yes|YES)
+      cp -- "${source_dir}/configuration.nix" "${target_dir}/configuration.nix"
+      cp -- "${source_dir}/hardware-configuration.nix" "${target_dir}/hardware-configuration.nix"
+      echo "Imported configuration.nix and hardware-configuration.nix."
+      ;;
+    *)
+      echo "Import cancelled."
+      ;;
+  esac
+}
+
+case "${1:-}" in
+  sync-from-etc)
+    sync_from_etc
+    ;;
+  check)
+    nix "${nix_flags[@]}" flake check "path:${root}"
+    nix "${nix_flags[@]}" eval \
+      "path:${root}#nixosConfigurations.${host}.config.system.build.toplevel.drvPath" \
+      >/dev/null
+    ;;
+  build)
+    nixos-rebuild build --flake "${flake}"
+    ;;
+  test)
+    sudo nixos-rebuild test --flake "${flake}"
+    ;;
+  switch)
+    sudo nixos-rebuild switch --flake "${flake}"
+    ;;
+  help|-h|--help)
+    usage
+    ;;
+  *)
+    usage >&2
+    exit 1
+    ;;
+esac
