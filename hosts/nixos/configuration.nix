@@ -2,8 +2,20 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ config, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
+let
+  userDirs = pkgs.writeText "user-dirs.dirs" ''
+    XDG_DESKTOP_DIR="$HOME/Desktop"
+    XDG_DOWNLOAD_DIR="$HOME/Downloads"
+    XDG_TEMPLATES_DIR="$HOME/Templates"
+    XDG_PUBLICSHARE_DIR="$HOME/Public"
+    XDG_DOCUMENTS_DIR="$HOME/Documents"
+    XDG_MUSIC_DIR="$HOME/Music"
+    XDG_PICTURES_DIR="$HOME/Pictures"
+    XDG_VIDEOS_DIR="$HOME/Videos"
+  '';
+in
 {
   imports =
     [ # Include the results of the hardware scan.
@@ -64,6 +76,24 @@
   services.displayManager.gdm.enable = true;
   services.desktopManager.gnome.enable = true;
 
+  # Keep the display on for 30 minutes and suspend after 60 minutes of
+  # inactivity, both on AC power and battery.
+  programs.dconf.profiles.user.databases = [
+    {
+      settings = {
+        "org/gnome/desktop/session" = {
+          idle-delay = lib.gvariant.mkUint32 1800;
+        };
+        "org/gnome/settings-daemon/plugins/power" = {
+          sleep-inactive-ac-timeout = lib.gvariant.mkInt32 3600;
+          sleep-inactive-ac-type = "suspend";
+          sleep-inactive-battery-timeout = lib.gvariant.mkInt32 3600;
+          sleep-inactive-battery-type = "suspend";
+        };
+      };
+    }
+  ];
+
   # Configure keymap in X11
   services.xserver.xkb = {
     layout = "us";
@@ -94,7 +124,6 @@
   # services.xserver.libinput.enable = true;
 
   # My first customize
-  services.flatpak.enable = true;
   xdg.portal.enable = true;
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
@@ -107,6 +136,20 @@
     ];
   };
 
+  # Use English XDG user directory names regardless of the system locale.
+  systemd.tmpfiles.rules = [
+    "d /home/ikd/Desktop 0755 ikd users -"
+    "d /home/ikd/Documents 0755 ikd users -"
+    "d /home/ikd/Downloads 0755 ikd users -"
+    "d /home/ikd/Music 0755 ikd users -"
+    "d /home/ikd/Pictures 0755 ikd users -"
+    "d /home/ikd/Public 0755 ikd users -"
+    "d /home/ikd/Templates 0755 ikd users -"
+    "d /home/ikd/Videos 0755 ikd users -"
+    "d /home/ikd/.config 0755 ikd users -"
+    "L+ /home/ikd/.config/user-dirs.dirs - - - - ${userDirs}"
+  ];
+
   # Install firefox.
   programs.firefox.enable = true;
 
@@ -115,7 +158,6 @@
   environment.systemPackages = with pkgs; [
     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     wget
-    flatpak
     kdePackages.fcitx5-configtool
   ];
 

@@ -1,53 +1,56 @@
-# NixOS configuration worklog
+# NixOS 構成作業記録
 
-Last updated: 2026-06-12 (Asia/Tokyo)
+最終更新: 2026-06-12（Asia/Tokyo）
 
-## Goal
+## 目的
 
-Manage this machine's NixOS configuration from this repository, using a Flake
-and a repeatable check/build/test/switch workflow. This repository is the source
-of truth; `/etc/nixos` is only an emergency import source.
+このマシンの NixOS 構成を Flake と、繰り返し実行可能な
+check/build/test/switch の手順を使って、このリポジトリから管理します。
+このリポジトリを信頼できる唯一の情報源とし、`/etc/nixos` は緊急時の
+取り込み元としてのみ使用します。
 
-## Completed
+## 完了した作業
 
-- Copied the current `/etc/nixos/configuration.nix` and
-  `/etc/nixos/hardware-configuration.nix` into `hosts/nixos/`.
-- Added `flake.nix` with `nixosConfigurations.nixos`, using the NixOS 26.05
-  nixpkgs branch.
-- Generated `flake.lock`, pinned to nixpkgs revision
-  `bd0ff2d3eac24699c3664d5966b9ef36f388e2ca` from 2026-06-08.
-- Added `hosts/nixos/repository.nix` to:
-  - install Git;
-  - enable `nix-command` and `flakes`.
-- Added `bin/nixos-config` with:
+- 現在の `/etc/nixos/configuration.nix` と
+  `/etc/nixos/hardware-configuration.nix` を `hosts/nixos/` にコピーした。
+- NixOS 26.05 の nixpkgs ブランチを使用する
+  `nixosConfigurations.nixos` を定義した `flake.nix` を追加した。
+- `flake.lock` を生成し、2026-06-08 時点の nixpkgs リビジョン
+  `bd0ff2d3eac24699c3664d5966b9ef36f388e2ca` に固定した。
+- `hosts/nixos/repository.nix` を追加し、次を設定した。
+  - Git のインストール
+  - `nix-command` と `flakes` の有効化
+- `bin/nixos-config` に次のコマンドを追加した。
   - `sync-from-etc`
   - `check`
   - `build`
   - `test`
   - `switch`
-- Added `.gitignore` and `README.md`.
-- Initialized `.git` with the `main` branch.
-- Did not create a commit because global Git identity is intentionally deferred.
-- Successfully activated the Flake configuration on 2026-06-12.
-- Confirmed:
-  - Git 2.54.0 is available from `/run/current-system/sw/bin/git`;
-  - `/etc/nix/nix.conf` enables `nix-command flakes`;
-  - `sync-from-etc` initially reports no differences;
-  - `result` and `result-*` are ignored;
-  - `./bin/nixos-config check` passes;
-  - `./bin/nixos-config build` succeeds.
-- Updated the renamed GNOME and GDM options to their current NixOS names. This
-  final warning cleanup was applied successfully.
-- Confirmed the final `./bin/nixos-config check` succeeds without warnings.
-- The current system path is
-  `/nix/store/kch4yg0w55n3wlmklk01rxnkgs5xcz1s-nixos-system-nixos-26.05.20260608.bd0ff2d`.
+- `.gitignore` と `README.md` を追加した。
+- `.git` を `main` ブランチで初期化した。
+- グローバルな Git ユーザー情報の設定を後回しにしたため、
+  この時点ではコミットを作成しなかった。
+- 2026-06-12 に Flake 構成を正常に有効化した。
+- 次を確認した。
+  - `/run/current-system/sw/bin/git` から Git 2.54.0 を使用できる。
+  - `/etc/nix/nix.conf` で `nix-command flakes` が有効になっている。
+  - 初期状態で `sync-from-etc` に差分がない。
+  - `result` と `result-*` が無視される。
+  - `./bin/nixos-config check` が成功する。
+  - `./bin/nixos-config build` が成功する。
+- 名前が変更された GNOME と GDM のオプションを、現在の NixOS の名前に
+  更新した。警告を解消した最終設定も正常に反映された。
+- 最終的な `./bin/nixos-config check` が警告なしで成功することを確認した。
+- この時点のシステムパスは次のとおり。
+  `/nix/store/kch4yg0w55n3wlmklk01rxnkgs5xcz1s-nixos-system-nixos-26.05.20260608.bd0ff2d`
 
-## Initial activation note
+## 初回有効化に関する記録
 
-The first activation has been completed. The following command is retained for
-recovery or setup on a fresh installation:
+初回の有効化は完了しています。次のコマンドは、復旧時または新規環境の
+セットアップ用として残しています。
 
-The first activation must explicitly enable Flakes on the command line:
+初回の有効化では、コマンドラインで Flake を明示的に有効化する必要が
+あります。
 
 ```sh
 cd /home/ikd/workspace/nixos-config
@@ -56,15 +59,15 @@ sudo nixos-rebuild switch \
   --flake "path:$PWD#nixos"
 ```
 
-This installs Git and persists the experimental feature settings.
+この操作により Git がインストールされ、実験的機能の設定が永続化されます。
 
-An earlier attempt used `--extra-experimental-features`, but this installed
-`nixos-rebuild` rejected that Nix global argument. Use the supported `--option`
-form shown above.
+以前は `--extra-experimental-features` を使用しましたが、この環境の
+`nixos-rebuild` では、その Nix グローバル引数を受け付けませんでした。
+上記の対応している `--option` 形式を使用します。
 
-## Resume checklist
+## 作業再開時のチェックリスト
 
-For the next session:
+次回のセッションでは、次を実行します。
 
 ```sh
 cd /home/ikd/workspace/nixos-config
@@ -78,7 +81,8 @@ git status --short --branch
 ./bin/nixos-config switch
 ```
 
-Then configure the global Git identity before the first commit:
+その後、最初のコミットを作成する前にグローバルな Git ユーザー情報を
+設定します。
 
 ```sh
 git config --global user.name "<name>"
@@ -86,35 +90,35 @@ git config --global user.email "<email>"
 git commit -m "Initialize NixOS configuration"
 ```
 
-Do not add a GitHub remote until its destination has been decided.
+接続先が決まるまでは GitHub のリモートを追加しません。
 
-## Remaining verification
+## 残っている確認事項
 
-- Continue adding the desired NixOS and home configuration.
+- 必要な NixOS とホームディレクトリの設定を引き続き追加する。
 
-## Notes
+## 注意事項
 
-- `configuration.bak.nix` is intentionally not managed.
-- `hosts/nixos/repository.nix` is separate so an emergency
-  `sync-from-etc` cannot remove Git or Flake support.
-- `/etc/nixos` is not rewritten by a Flake switch. Differences are expected
-  after repository changes. Only accept `sync-from-etc` when `/etc/nixos`
-  intentionally contains a newer emergency fix.
-- `hosts/nixos/hardware-configuration.nix` describes this machine and should
-  normally not be edited manually.
+- `configuration.bak.nix` は意図的に管理対象外としている。
+- 緊急時に `sync-from-etc` を実行しても Git や Flake のサポートが
+  削除されないように、`hosts/nixos/repository.nix` を分離している。
+- Flake の切り替えでは `/etc/nixos` は書き換えられない。
+  リポジトリを変更した後に差分があるのは正常である。
+  `/etc/nixos` に意図した新しい緊急修正が含まれている場合に限り、
+  `sync-from-etc` による取り込みを行う。
+- `hosts/nixos/hardware-configuration.nix` はこのマシンの構成を記述する
+  ファイルであり、通常は手動で編集しない。
 
-## Pending Git configuration change
+## Git 設定変更の記録
 
-On 2026-06-12, the latest `.gitconfig` from
-`https://github.com/ikmnjrd/dotfiles` was added as `home/.gitconfig`.
+2026-06-12 に、`https://github.com/ikmnjrd/dotfiles` にある最新の
+`.gitconfig` を `home/.gitconfig` として追加しました。
 
-`hosts/nixos/repository.nix` now:
+`hosts/nixos/repository.nix` では次を設定しています。
 
-- creates `/home/ikd/.gitconfig` as a managed symlink;
-- installs `git-lfs`, `gh`, and `neovim`, which the imported configuration
-  references.
+- `/home/ikd/.gitconfig` から管理対象ファイルへのシンボリックリンクを作成する。
+- 取り込んだ設定が参照する `git-lfs`、`gh`、`neovim` をインストールする。
 
-Before asking the user to switch, run:
+ユーザーに切り替えを依頼する前に、次を実行します。
 
 ```sh
 ./bin/nixos-config check
@@ -123,7 +127,7 @@ git add .
 git diff --cached --check
 ```
 
-After the user runs `./bin/nixos-config switch`, verify:
+ユーザーが `./bin/nixos-config switch` を実行した後、次を確認します。
 
 ```sh
 readlink -f /home/ikd/.gitconfig
@@ -135,47 +139,47 @@ gh --version
 nvim --version
 ```
 
-## GitHub connection
+## GitHub との接続
 
-The Git configuration was applied and the initial commit was created:
+Git の設定を反映し、次の初期コミットを作成しました。
 
 ```text
 24f073f init
 ```
 
-Current state:
+その時点の状態は次のとおりです。
 
-- no Git remote is configured;
-- `/home/ikd/.ssh` contains no key or SSH config;
-- `gh auth status` reports no authenticated GitHub host;
-- Git identity is `ike <40803799+ikmnjrd@users.noreply.github.com>`.
+- Git のリモートは未設定。
+- `/home/ikd/.ssh` に鍵や SSH 設定は存在しない。
+- `gh auth status` では認証済みの GitHub ホストがない。
+- Git ユーザー情報は
+  `ike <40803799+ikmnjrd@users.noreply.github.com>`。
 
-Authenticate interactively with GitHub and let GitHub CLI create/register an
-SSH key:
+GitHub へ対話的に認証し、GitHub CLI に SSH 鍵の作成と登録を行わせます。
 
 ```sh
 gh auth login --hostname github.com --git-protocol ssh --web
 ```
 
-Authentication credentials and the private SSH key must remain outside this
-repository. Do not add them to Nix configuration or Git.
+認証情報と SSH 秘密鍵は、このリポジトリの外部で管理する必要があります。
+Nix 構成や Git の管理対象には追加しません。
 
-After authentication, verify:
+認証後、次を確認します。
 
 ```sh
 gh auth status
 ssh -T git@github.com
 ```
 
-Then decide the repository name and visibility before running `gh repo create`
-or adding an existing repository as `origin`.
+その後、`gh repo create` の実行または既存リポジトリを `origin` として
+追加する前に、リポジトリ名と公開範囲を決定します。
 
-GitHub connectivity was completed and verified on 2026-06-12:
+GitHub との接続は 2026-06-12 に完了し、次を確認しました。
 
-- GitHub CLI account: `ikmnjrd`;
-- Git protocol: SSH;
-- `ssh -T git@github.com` authenticated successfully;
-- remote: `git@github.com:ikmnjrd/nixos-config.git`;
-- repository: `https://github.com/ikmnjrd/nixos-config`;
-- visibility: public;
-- local `main` and `origin/main` were synchronized at commit `24f073f`.
+- GitHub CLI のアカウント: `ikmnjrd`
+- Git プロトコル: SSH
+- `ssh -T git@github.com` による認証に成功
+- リモート: `git@github.com:ikmnjrd/nixos-config.git`
+- リポジトリ: `https://github.com/ikmnjrd/nixos-config`
+- 公開範囲: public
+- ローカルの `main` と `origin/main` はコミット `24f073f` で同期済み

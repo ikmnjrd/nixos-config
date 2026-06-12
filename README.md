@@ -1,14 +1,17 @@
 # nixos-config
 
-This repository is the source of truth for the NixOS host named `nixos`.
-The configuration uses a flake pinned to the NixOS 26.05 branch.
+このリポジトリは、ホスト名 `nixos` の NixOS 構成を管理するための
+信頼できる唯一の情報源です。NixOS 26.05 ブランチに固定した Flake を
+使用しています。
 
-## First setup
+## 初期セットアップ
 
-The repository starts from the current files in `/etc/nixos`. Repository tooling
-is kept separately in `hosts/nixos/repository.nix`, so importing an emergency
-edit does not remove Git or Flake support. Before the first switch, review the
-configuration and run:
+このリポジトリは、現在の `/etc/nixos` の内容を元に作成しました。
+緊急時に `/etc/nixos` から設定を取り込んでも Git や Flake のサポートが
+失われないように、リポジトリ管理用の設定は
+`hosts/nixos/repository.nix` に分離しています。
+
+初回の切り替え前に設定内容を確認し、次を実行します。
 
 ```sh
 ./bin/nixos-config check
@@ -18,13 +21,13 @@ sudo nixos-rebuild switch \
   --flake "path:$PWD#nixos"
 ```
 
-The repository is already initialized with `main` as its default branch. The
-first switch installs Git and enables `nix-command` and `flakes` persistently.
-Set your global Git identity before making the first commit.
+リポジトリは `main` をデフォルトブランチとして初期化済みです。
+初回の切り替えにより Git がインストールされ、`nix-command` と `flakes` が
+継続的に有効になります。
 
-## Daily workflow
+## 日常的な操作
 
-Edit files under `hosts/nixos`, then validate and activate them:
+`hosts/nixos` 以下のファイルを編集し、検証してから反映します。
 
 ```sh
 ./bin/nixos-config check
@@ -33,37 +36,63 @@ Edit files under `hosts/nixos`, then validate and activate them:
 ./bin/nixos-config switch
 ```
 
-`test` activates the configuration without changing the boot default. Use
-`switch` after confirming the system works.
+`test` は起動時のデフォルト世代を変更せず、一時的に構成を有効化します。
+動作を確認した後に `switch` を実行します。
 
-If `/etc/nixos` was edited directly in an emergency, import only the two managed
-files after reviewing the displayed diff:
+緊急時に `/etc/nixos` を直接編集した場合は、表示される差分を確認してから、
+管理対象の2ファイルだけを取り込みます。
 
 ```sh
 ./bin/nixos-config sync-from-etc
 ```
 
-Do not use `/etc/nixos` as the normal editing location.
-`configuration.bak.nix` is intentionally not managed.
-After repository-only changes, differences from `/etc/nixos` are expected.
-Do not accept `sync-from-etc` unless `/etc/nixos` intentionally contains a
-newer emergency fix; otherwise it would restore stale settings.
+通常の編集場所として `/etc/nixos` を使用しないでください。
+`configuration.bak.nix` は意図的に管理対象外としています。
+リポジトリだけを変更した後に `/etc/nixos` との差分があるのは正常です。
+`/etc/nixos` に意図した緊急修正が含まれている場合を除き、
+`sync-from-etc` による取り込みは行わないでください。古い設定に戻る可能性が
+あります。
 
-## Rollback
+## Flatpak アプリケーション
 
-List and activate previous generations with:
+システム全体で使用する Flatpak アプリケーションとリモートは
+`hosts/nixos/flatpak.nix` で宣言します。Flathub は自動的に登録され、
+宣言したアプリケーションは NixOS の有効化後に
+`flatpak-managed-install` systemd サービスによってインストールされます。
+
+Flathub のアプリケーションを追加する場合は、そのアプリケーション ID を
+`services.flatpak.packages` に追加します。
+
+Brave（`com.brave.Browser`）は HTTP、HTTPS、HTML、XHTML の既定アプリです。
+Flatpak アプリケーションは NixOS の有効化時、および毎週月曜日と木曜日の
+午前3時に更新されます。
+
+初回の有効化では、宣言したアプリケーションがシステム全体のインストールへ
+移行します。`flatpak list --system` に表示されることを確認した後、
+ランチャーの重複を避けるため、以前のユーザー単位のインストールを削除します。
+
+```sh
+flatpak uninstall --user com.brave.Browser com.onepassword.OnePassword
+```
+
+## ロールバック
+
+過去の世代を一覧表示し、以前の構成へ戻すには次を実行します。
 
 ```sh
 sudo nixos-rebuild list-generations
 sudo nixos-rebuild switch --rollback
 ```
 
-`hosts/nixos/hardware-configuration.nix` is tracked because it describes this
-machine's disks and hardware, but it should not normally be edited by hand.
+`hosts/nixos/hardware-configuration.nix` は、このマシンのディスクや
+ハードウェア構成を記述しているため管理対象に含めていますが、通常は手動で
+編集しません。
 
-## Git configuration
+## Git の設定
 
-`home/.gitconfig` is imported from
-`https://github.com/ikmnjrd/dotfiles/blob/main/.gitconfig`. A NixOS switch
-creates `/home/ikd/.gitconfig` as a managed symlink to the Nix store. Git LFS,
-GitHub CLI, and Neovim are installed because the configuration references them.
+`home/.gitconfig` は
+`https://github.com/ikmnjrd/dotfiles/blob/main/.gitconfig` から取り込んだ
+設定です。NixOS の切り替え時に、`/home/ikd/.gitconfig` から Nix store
+内の管理対象ファイルへのシンボリックリンクを作成します。
+
+この設定が参照する Git LFS、GitHub CLI、Neovim もインストールします。
