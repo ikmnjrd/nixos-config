@@ -138,9 +138,7 @@ in
     isNormalUser = true;
     description = "ikd";
     extraGroups = [ "networkmanager" "wheel" ];
-    packages = with pkgs; [
-    #  thunderbird
-    ];
+    shell = pkgs.zsh;
   };
 
   # Use English XDG user directory names regardless of the system locale.
@@ -170,12 +168,16 @@ in
   # Install firefox.
   programs.firefox.enable = true;
 
+  # Register Zsh as a valid login shell. User configuration is managed by
+  # Home Manager.
+  programs.zsh.enable = true;
+
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
+    kdePackages.fcitx5-configtool
     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     wget
-    kdePackages.fcitx5-configtool
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -189,7 +191,7 @@ in
   # List services that you want to enable:
 
   # Enable the OpenSSH daemon.
-  # services.openssh.enable = true;
+  services.openssh.enable = true;
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];

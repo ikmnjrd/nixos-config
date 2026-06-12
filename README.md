@@ -7,9 +7,10 @@
 ## 初期セットアップ
 
 このリポジトリは、現在の `/etc/nixos` の内容を元に作成しました。
-緊急時に `/etc/nixos` から設定を取り込んでも Git や Flake のサポートが
-失われないように、リポジトリ管理用の設定は
-`hosts/nixos/repository.nix` に分離しています。
+緊急時に `/etc/nixos` から設定を取り込んでも Flake のサポートが
+失われないように、Nix の設定は `hosts/nixos/repository.nix` に分離して
+います。ユーザー `ikd` の開発環境は Home Manager を使い、
+`home/ikd.nix` で管理します。
 
 初回の切り替え前に設定内容を確認し、次を実行します。
 
@@ -22,12 +23,13 @@ sudo nixos-rebuild switch \
 ```
 
 リポジトリは `main` をデフォルトブランチとして初期化済みです。
-初回の切り替えにより Git がインストールされ、`nix-command` と `flakes` が
-継続的に有効になります。
+初回の切り替えによりHome Managerのユーザー環境が作成され、
+`nix-command` と `flakes` が継続的に有効になります。
 
 ## 日常的な操作
 
-`hosts/nixos` 以下のファイルを編集し、検証してから反映します。
+システム設定は `hosts/nixos`、ユーザー環境は `home/ikd.nix` 以下を編集し、
+検証してから反映します。
 
 ```sh
 ./bin/nixos-config check
@@ -88,11 +90,13 @@ sudo nixos-rebuild switch --rollback
 ハードウェア構成を記述しているため管理対象に含めていますが、通常は手動で
 編集しません。
 
-## Git の設定
+## Home Manager
 
 `home/.gitconfig` は
 `https://github.com/ikmnjrd/dotfiles/blob/main/.gitconfig` から取り込んだ
-設定です。NixOS の切り替え時に、`/home/ikd/.gitconfig` から Nix store
-内の管理対象ファイルへのシンボリックリンクを作成します。
+設定です。Home Managerが `/home/ikd/.gitconfig` をNix store内の
+管理対象ファイルへリンクします。
 
-この設定が参照する Git LFS、GitHub CLI、Neovim もインストールします。
+`home/ikd.nix` はGit、Git LFS、GitHub CLI、Neovim、foot、Zsh、tmux、
+fzf、batと開発用CLIをユーザー単位で管理します。既存の管理対象ファイルと
+衝突した場合は、初回の有効化時に拡張子 `.hm-backup` で退避します。
