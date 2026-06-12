@@ -90,10 +90,7 @@ Do not add a GitHub remote until its destination has been decided.
 
 ## Remaining verification
 
-- Apply the Git configuration addition with `./bin/nixos-config switch`.
-- Confirm `/home/ikd/.gitconfig` is a symlink and Git reads the expected
-  identity, aliases, and editor.
-- Make the first commit using the deployed identity.
+- Continue adding the desired NixOS and home configuration.
 
 ## Notes
 
@@ -137,3 +134,48 @@ git lfs version
 gh --version
 nvim --version
 ```
+
+## GitHub connection
+
+The Git configuration was applied and the initial commit was created:
+
+```text
+24f073f init
+```
+
+Current state:
+
+- no Git remote is configured;
+- `/home/ikd/.ssh` contains no key or SSH config;
+- `gh auth status` reports no authenticated GitHub host;
+- Git identity is `ike <40803799+ikmnjrd@users.noreply.github.com>`.
+
+Authenticate interactively with GitHub and let GitHub CLI create/register an
+SSH key:
+
+```sh
+gh auth login --hostname github.com --git-protocol ssh --web
+```
+
+Authentication credentials and the private SSH key must remain outside this
+repository. Do not add them to Nix configuration or Git.
+
+After authentication, verify:
+
+```sh
+gh auth status
+ssh -T git@github.com
+```
+
+Then decide the repository name and visibility before running `gh repo create`
+or adding an existing repository as `origin`.
+
+GitHub connectivity was completed and verified on 2026-06-12:
+
+- GitHub CLI account: `ikmnjrd`;
+- Git protocol: SSH;
+- `ssh -T git@github.com` authenticated successfully;
+- remote: `git@github.com:ikmnjrd/nixos-config.git`;
+- repository: `https://github.com/ikmnjrd/nixos-config`;
+- visibility: public;
+- local `main` and `origin/main` were synchronized at commit `24f073f`.
