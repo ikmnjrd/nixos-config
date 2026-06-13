@@ -8,9 +8,10 @@
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nix-claude-code.url = "github:ryoppippi/nix-claude-code";
   };
 
-  outputs = { nixpkgs, nix-flatpak, home-manager, ... }: {
+  outputs = { nixpkgs, nix-flatpak, home-manager, nix-claude-code, ... }: {
     nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       modules = [
@@ -19,6 +20,13 @@
         ./hosts/nixos/configuration.nix
         ./hosts/nixos/flatpak.nix
         ./hosts/nixos/repository.nix
+        ({ lib, ... }: {
+          nixpkgs = {
+            config.allowUnfreePredicate = pkg:
+              builtins.elem (lib.getName pkg) [ "claude" ];
+            overlays = [ nix-claude-code.overlays.default ];
+          };
+        })
         {
           home-manager = {
             useGlobalPkgs = true;
