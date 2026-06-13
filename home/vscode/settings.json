@@ -1,0 +1,66 @@
+{
+  "workbench.startupEditor": "newUntitledFile",
+  "git.autofetch": true,
+  "remote.onstartup": true,
+  "terminal.integrated.defaultProfile.linux": "zsh",
+  "terminal.integrated.profiles.linux": {
+    "zsh": {
+      "path": "/run/current-system/sw/bin/zsh",
+      "args": ["-l"]
+    }
+  },
+  "terminal.integrated.fontFamily": "Source Code Pro",
+  "terminal.external.linuxExec": "foot",
+  "editor.tabSize": 2,
+  "editor.fontFamily": "Source Code Pro",
+  "editor.fontLigatures": true,
+  "editor.bracketPairColorization.enabled": true,
+  "workbench.editor.splitInGroupLayout": "vertical",
+  "redhat.telemetry.enabled": false,
+  "workbench.editor.wrapTabs": true,
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "window.zoomLevel": 1,
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "extensions.experimental.affinity": {
+    "asvetliakov.vscode-neovim": 1
+  },
+  "javascript.updateImportsOnFileMove.enabled": "never",
+  "editor.inlineSuggest.enabled": true,
+  "workbench.editor.empty.hint": "hidden",
+  "cSpell.userWords": [
+    "deepseek",
+    "Nuxt"
+  ],
+  "vscode-neovim.ctrlKeysForNormalMode": [
+    "a",
+    "b",
+    "c",
+    "d",
+    "e",
+    "h",
+    "i",
+    "j",
+    "l",
+    "m",
+    "o",
+    "r",
+    "t",
+    "u",
+    "v",
+    "x",
+    "y",
+    "z",
+    "/",
+    "]",
+    "right",
+    "left",
+    "up",
+    "down",
+    "backspace",
+    "delete"
+  ]
+}

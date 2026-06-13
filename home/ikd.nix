@@ -18,14 +18,21 @@
       ghq
       git
       git-lfs
+      glow
       jq
       peco
       ripgrep
       source-code-pro
       tree
+      wl-clipboard
     ];
 
-    file.".gitconfig".source = ./.gitconfig;
+    file = {
+      ".gitconfig".source = ./.gitconfig;
+      ".config/git/ignore".source = ./git-ignore;
+      ".config/Code/User/settings.json".source = ./vscode/settings.json;
+      ".config/Code/User/keybindings.json".source = ./vscode/keybindings.json;
+    };
   };
 
   programs = {
@@ -82,6 +89,22 @@
     neovim = {
       enable = true;
       defaultEditor = true;
+      withNodeJs = true;
+      plugins = with pkgs.vimPlugins; [
+        coc-nvim
+        vim-gina
+        vim-fern
+        (nvim-treesitter.withPlugins (parsers: with parsers; [
+          prisma
+          rust
+          tsx
+          typescript
+        ]))
+        nord-nvim
+        indent-blankline-nvim
+        glow-nvim
+      ];
+      extraConfig = builtins.readFile ./nvim/init.vim;
     };
 
     tmux = {
@@ -113,15 +136,47 @@
         view = "nvim -R";
         cat = "bat --paging=never";
         day = "date +%Y-%m-%d";
+        his = "fc -l -t \"%Y-%m-%d %H:%M:%S \"";
         ls = "ls --color=auto";
         ll = "ls -l --color=auto";
         l = "ls -al --color=auto";
+        pbcopy = "wl-copy";
+        pbpaste = "wl-paste";
+      };
+
+      history = {
+        path = "$HOME/.zsh_history";
+        size = 10000;
+        save = 10000;
+        append = true;
+        share = true;
+        extended = true;
       };
 
       initContent = ''
         export BAT_THEME="Nord"
         export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border --preview "bat --color=always --style=header,grid --line-range :100 {}"'
+        export FZF_CTRL_R_OPTS="
+          --preview 'echo {}' --preview-window up:3:hidden:wrap
+          --bind 'ctrl-/:toggle-preview'
+          --bind 'ctrl-y:execute-silent(echo -n {2..} | wl-copy)+abort'
+          --color header:italic
+          --header 'Press CTRL-Y to copy command into clipboard'"
         export FZF_ALT_C_OPTS="--preview 'tree -C {} | head -200'"
+
+        source ${pkgs.git}/share/git/contrib/completion/git-prompt.sh
+        GIT_PS1_SHOWDIRTYSTATE=true
+        GIT_PS1_SHOWUNTRACKEDFILES=true
+        GIT_PS1_SHOWSTASHSTATE=true
+        GIT_PS1_SHOWUPSTREAM=auto
+        setopt PROMPT_SUBST
+        PS1='[%n@%m %c$(__git_ps1 " (%s)")]\$ '
+
+        fbr() {
+          local branch
+          branch=$(git branch --format='%(refname:short)' | fzf) || return
+          [[ -n "$branch" ]] && git switch "$branch"
+        }
 
         gcd() {
           local repo
