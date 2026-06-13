@@ -153,6 +153,7 @@ in
     "d /home/ikd/Public 0755 ikd users -"
     "d /home/ikd/Templates 0755 ikd users -"
     "d /home/ikd/Videos 0755 ikd users -"
+    "d /home/ikd/workspace 0755 ikd users -"
     "d /home/ikd/.config 0755 ikd users -"
     "d /home/ikd/.config/gtk-3.0 0755 ikd users -"
     "L+ /home/ikd/.config/gtk-3.0/bookmarks - - - - ${gtkBookmarks}"

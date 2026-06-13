@@ -14,9 +14,11 @@
     packages = with pkgs; [
       fd
       gh
+      ghq
       git
       git-lfs
       jq
+      peco
       ripgrep
       source-code-pro
       tree
@@ -119,6 +121,12 @@
         export BAT_THEME="Nord"
         export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border --preview "bat --color=always --style=header,grid --line-range :100 {}"'
         export FZF_ALT_C_OPTS="--preview 'tree -C {} | head -200'"
+
+        gcd() {
+          local repo
+          repo=$(ghq list | peco) || return
+          [[ -n "$repo" ]] && cd "$(ghq root)/$repo"
+        }
 
         select_worktree() {
           local worktrees selected
