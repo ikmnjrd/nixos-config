@@ -57,12 +57,34 @@ if !exists('g:vscode')
   nnoremap <silent> <Leader>E :<C-u>Fern . -drawer -reveal=%<CR>
   let g:fern#default_hidden = 1
 
-  let g:nord_contrast = v:true
-  let g:nord_borders = v:false
-  let g:nord_disable_background = v:true
-  let g:nord_italic = v:false
-  let g:nord_uniform_diff_background = v:true
-  colorscheme nord
+  lua << EOF
+  local window_index = vim.env.TMUX_PANE
+    and vim.fn.system({ 'tmux', 'display-message', '-p', '-t', vim.env.TMUX_PANE, '#{window_index}' }):gsub('%s+$', '')
+    or ''
+
+  local colorscheme = 'nord'
+  if window_index == '2' then
+    colorscheme = 'gruvbox'
+    require('gruvbox').setup({ transparent_mode = true })
+  elseif window_index == '3' then
+    colorscheme = 'catppuccin-mocha'
+    require('catppuccin').setup({ transparent_background = true })
+  elseif window_index == '4' then
+    colorscheme = 'solarized'
+    vim.g.solarized_disable_background = true
+  else
+    vim.g.nord_contrast = true
+    vim.g.nord_borders = false
+    vim.g.nord_disable_background = true
+    vim.g.nord_italic = false
+    vim.g.nord_uniform_diff_background = true
+  end
+
+  vim.cmd.colorscheme(colorscheme)
+  for _, group in ipairs({ 'Normal', 'NormalNC', 'NormalFloat', 'SignColumn', 'EndOfBuffer' }) do
+    vim.api.nvim_set_hl(0, group, { bg = 'NONE' })
+  end
+EOF
 endif
 
 lua << EOF

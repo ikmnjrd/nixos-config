@@ -32,6 +32,94 @@
       ".config/git/ignore".source = ./git-ignore;
       ".config/Code/User/settings.json".source = ./vscode/settings.json;
       ".config/Code/User/keybindings.json".source = ./vscode/keybindings.json;
+      ".config/tmux/window-theme" = {
+        executable = true;
+        text = ''
+          #!/bin/sh
+
+          window_index="$1"
+          if [ -z "$window_index" ] && [ -n "$TMUX_PANE" ]; then
+            window_index="$(tmux display-message -p -t "$TMUX_PANE" '#{window_index}')"
+          fi
+
+          case "$window_index" in
+            2) theme="gruvbox" ;;
+            3) theme="catppuccin" ;;
+            4) theme="solarized" ;;
+            *) theme="nord" ;;
+          esac
+
+          case "$2" in
+            bat)
+              case "$theme" in
+                gruvbox) echo "gruvbox-dark" ;;
+                catppuccin) echo "Catppuccin Mocha" ;;
+                solarized) echo "Solarized (dark)" ;;
+                nord) echo "Nord" ;;
+              esac
+              ;;
+            *) echo "$theme" ;;
+          esac
+        '';
+      };
+      ".local/bin/bat" = {
+        executable = true;
+        text = ''
+          #!/bin/sh
+
+          theme="$("$HOME/.config/tmux/window-theme" "" bat)"
+          exec ${pkgs.bat}/bin/bat --theme "$theme" "$@"
+        '';
+      };
+      ".config/tmux/apply-window-theme" = {
+        executable = true;
+        text = ''
+          #!/bin/sh
+
+          target="$1"
+          theme="$("$HOME/.config/tmux/window-theme" "$2")"
+
+          case "$theme" in
+            gruvbox)
+              background="#282828"
+              foreground="#ebdbb2"
+              palette="282828 cc241d 98971a d79921 458588 b16286 689d6a a89984 928374 fb4934 b8bb26 fabd2f 83a598 d3869b 8ec07c ebdbb2"
+              ;;
+            catppuccin)
+              background="#1e1e2e"
+              foreground="#cdd6f4"
+              palette="45475a f38ba8 a6e3a1 f9e2af 89b4fa f5c2e7 94e2d5 bac2de 585b70 f38ba8 a6e3a1 f9e2af 89b4fa f5c2e7 94e2d5 a6adc8"
+              ;;
+            solarized)
+              background="#002b36"
+              foreground="#839496"
+              palette="073642 dc322f 859900 b58900 268bd2 d33682 2aa198 eee8d5 002b36 cb4b16 586e75 657b83 839496 6c71c4 93a1a1 fdf6e3"
+              ;;
+            nord)
+              background="#2e3440"
+              foreground="#d8dee9"
+              palette="3b4252 bf616a a3be8c ebcb8b 81a1c1 b48ead 88c0d0 e5e9f0 4c566a bf616a a3be8c ebcb8b 81a1c1 b48ead 8fbcbb eceff4"
+              ;;
+          esac
+
+          set -- $palette
+          tmux list-clients -F '#{client_tty} #{window_id}' |
+            while read -r client_tty client_window_id; do
+            [ "$client_window_id" = "$target" ] || continue
+            [ -w "$client_tty" ] || continue
+
+            # Bypass tmux's per-pane color state so foot keeps its configured alpha.
+            {
+              printf '\033]10;%s\007\033]11;%s\007' "$foreground" "$background"
+              index=0
+              for color in "$@"; do
+                printf '\033]4;%s;#%s\007' "$index" "$color"
+                index=$((index + 1))
+              done
+            } > "$client_tty"
+          done
+        '';
+      };
     };
   };
 
@@ -49,6 +137,7 @@
 
         colors-dark = {
           alpha = 0.9;
+          alpha-mode = "all";
           foreground = "d8dee9";
           background = "2e3440";
 
@@ -100,7 +189,10 @@
           tsx
           typescript
         ]))
+        catppuccin-nvim
+        gruvbox-nvim
         nord-nvim
+        solarized-nvim
         indent-blankline-nvim
         glow-nvim
       ];
@@ -120,6 +212,10 @@
         set -g bell-action any
         bind-key | select-layout even-vertical
         bind-key - select-layout main-vertical
+        set-hook -g after-new-window \
+          'run-shell "~/.config/tmux/apply-window-theme #{window_id} #{window_index}"'
+        set-hook -g after-select-window \
+          'run-shell "~/.config/tmux/apply-window-theme #{window_id} #{window_index}"'
       '';
     };
 
@@ -154,7 +250,6 @@
       };
 
       initContent = ''
-        export BAT_THEME="Nord"
         export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border --preview "bat --color=always --style=header,grid --line-range :100 {}"'
         export FZF_CTRL_R_OPTS="
           --preview 'echo {}' --preview-window up:3:hidden:wrap
