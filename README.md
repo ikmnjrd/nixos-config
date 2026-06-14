@@ -100,3 +100,34 @@ sudo nixos-rebuild switch --rollback
 `home/ikd.nix` はGit、Git LFS、GitHub CLI、Neovim、foot、Zsh、tmux、
 fzf、batと開発用CLIをユーザー単位で管理します。既存の管理対象ファイルと
 衝突した場合は、初回の有効化時に拡張子 `.hm-backup` で退避します。
+
+## Remote development host
+
+PCまたはMac側の `remote-dev` CLIから、Git worktreeを
+`/home/ikd/workspace/remote-dev/<host>/<project>/<slot>/src` へ
+一方向同期して実行できます。NixOS側のコピーは実行専用であり、直接編集
+しません。
+
+初回は各ホストで専用鍵を作成します。
+
+```sh
+ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_nixos_remote_dev
+cat ~/.ssh/id_ed25519_nixos_remote_dev.pub
+```
+
+表示された公開鍵を `hosts/nixos/remote-dev-keys.nix` に追加して
+`./bin/nixos-config test` を実行します。鍵リストが空の間だけSSHの
+パスワード認証が維持され、1本以上追加すると鍵認証専用へ切り替わります。
+PCとMacの両方から接続できることを確認してから `switch` してください。
+
+この構成では次も有効になります。
+
+- `nixos.local` で到達するためのAvahi/mDNS
+- Docker EngineとDocker Compose
+- SSH切断後も開発unitを維持するuser linger
+- AC接続中の自動サスペンド無効化
+- `remote-dev-helper` によるslot、ポート、systemd user unitの管理
+
+開発サーバーはNixOSのloopbackだけに公開し、NixOS本体のブラウザから
+`remote-dev status` が表示するURLを開きます。NixOS再起動後は古いソースや
+秘密情報で自動起動せず、ホストから再度 `remote-dev up` を実行します。

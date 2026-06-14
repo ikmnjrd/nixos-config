@@ -28,6 +28,7 @@ in
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
+      ./remote-dev.nix
     ];
 
   # Bootloader.
@@ -84,8 +85,8 @@ in
   services.displayManager.gdm.enable = true;
   services.desktopManager.gnome.enable = true;
 
-  # Keep the display on for 30 minutes and suspend after 60 minutes of
-  # inactivity, both on AC power and battery.
+  # Turn the display off after 30 minutes. Suspend after 60 minutes on battery,
+  # but remain reachable for remote development while connected to AC power.
   programs.dconf.profiles.user.databases = [
     {
       settings = {
@@ -93,8 +94,8 @@ in
           idle-delay = lib.gvariant.mkUint32 1800;
         };
         "org/gnome/settings-daemon/plugins/power" = {
-          sleep-inactive-ac-timeout = lib.gvariant.mkInt32 3600;
-          sleep-inactive-ac-type = "suspend";
+          sleep-inactive-ac-timeout = lib.gvariant.mkInt32 0;
+          sleep-inactive-ac-type = "nothing";
           sleep-inactive-battery-timeout = lib.gvariant.mkInt32 3600;
           sleep-inactive-battery-type = "suspend";
         };
