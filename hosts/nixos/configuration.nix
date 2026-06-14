@@ -138,9 +138,12 @@ in
   users.users."ikd" = {
     isNormalUser = true;
     description = "ikd";
-    extraGroups = [ "networkmanager" "wheel" ];
+    extraGroups = [ "docker" "networkmanager" "wheel" ];
     shell = pkgs.zsh;
   };
+
+  # Docker Engine for local web development.
+  virtualisation.docker.enable = true;
 
   # Use English XDG user directory names regardless of the system locale.
   systemd.tmpfiles.rules = [

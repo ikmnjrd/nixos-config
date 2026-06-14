@@ -20,6 +20,10 @@
         appId = "com.onepassword.OnePassword";
         origin = "flathub";
       }
+      {
+        appId = "com.valvesoftware.Steam";
+        origin = "flathub";
+      }
     ];
 
     update = {

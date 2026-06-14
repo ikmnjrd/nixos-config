@@ -22,6 +22,7 @@
       jq
       peco
       ripgrep
+      sqlite
       source-code-pro
       tree
       wl-clipboard
@@ -125,6 +126,11 @@
 
   programs = {
     bat.enable = true;
+    direnv = {
+      enable = true;
+      enableZshIntegration = true;
+      nix-direnv.enable = true;
+    };
     fzf.enable = true;
     foot = {
       enable = true;
