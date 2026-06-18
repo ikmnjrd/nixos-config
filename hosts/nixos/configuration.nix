@@ -83,11 +83,25 @@ in
   # has a daemon to talk to.
   systemd.user.services.fcitx5-daemon = {
     description = "Fcitx5 input method daemon";
+    after = [ "graphical-session.target" ];
     partOf = [ "graphical-session.target" ];
     wantedBy = [ "graphical-session.target" ];
     serviceConfig = {
+      ExecStartPre = pkgs.writeShellScript "wait-for-wayland" ''
+        runtime_dir="''${XDG_RUNTIME_DIR:-/run/user/$(${pkgs.coreutils}/bin/id -u)}"
+        wayland_display="''${WAYLAND_DISPLAY:-wayland-0}"
+
+        for _ in $(${pkgs.coreutils}/bin/seq 1 100); do
+          [ -S "$runtime_dir/$wayland_display" ] && exit 0
+          ${pkgs.coreutils}/bin/sleep 0.1
+        done
+
+        echo "Wayland socket did not become available: $runtime_dir/$wayland_display" >&2
+        exit 1
+      '';
       ExecStart = "${config.i18n.inputMethod.package}/bin/fcitx5";
       Restart = "on-failure";
+      RestartSec = 1;
     };
   };
 
