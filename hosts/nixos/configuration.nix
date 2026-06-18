@@ -78,6 +78,19 @@ in
     };
   };
 
+  # GNOME does not always start the XDG autostart entry from the NixOS profile.
+  # Keep Fcitx5 running as part of the graphical user session so fcitx5-remote
+  # has a daemon to talk to.
+  systemd.user.services.fcitx5-daemon = {
+    description = "Fcitx5 input method daemon";
+    partOf = [ "graphical-session.target" ];
+    wantedBy = [ "graphical-session.target" ];
+    serviceConfig = {
+      ExecStart = "${config.i18n.inputMethod.package}/bin/fcitx5";
+      Restart = "on-failure";
+    };
+  };
+
   # Enable the X11 windowing system.
   services.xserver.enable = true;
 
@@ -109,6 +122,28 @@ in
     variant = "";
   };
 
+  # Use left/right Super taps for input-method switching while preserving
+  # Super as a modifier when held with another key.
+  services.keyd = {
+    enable = true;
+    keyboards.default = {
+      ids = [ "*" ];
+      settings.main = {
+        leftmeta = "overload(meta, f14)";
+        rightmeta = "overload(meta, f15)";
+      };
+    };
+  };
+  systemd.services.keyd.serviceConfig.CapabilityBoundingSet = lib.mkForce [
+    "CAP_IPC_LOCK"
+    "CAP_SETGID"
+    "CAP_SYS_NICE"
+  ];
+  systemd.services.keyd.serviceConfig.SystemCallFilter = lib.mkForce [
+    "@system-service"
+    "nice"
+  ];
+
   # Enable CUPS to print documents.
   services.printing.enable = true;
 
@@ -136,10 +171,11 @@ in
   xdg.portal.enable = true;
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
+  users.groups.keyd = {};
   users.users."ikd" = {
     isNormalUser = true;
     description = "ikd";
-    extraGroups = [ "docker" "networkmanager" "wheel" ];
+    extraGroups = [ "docker" "keyd" "networkmanager" "wheel" ];
     shell = pkgs.zsh;
   };
 

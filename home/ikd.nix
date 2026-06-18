@@ -124,6 +124,28 @@
     };
   };
 
+  dconf.settings = {
+    "org/gnome/mutter" = {
+      overlay-key = "F1";
+    };
+    "org/gnome/settings-daemon/plugins/media-keys" = {
+      custom-keybindings = [
+        "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/fcitx-english/"
+        "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/fcitx-japanese/"
+      ];
+    };
+    "org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/fcitx-english" = {
+      binding = "XF86Launch5";
+      command = "${pkgs.fcitx5}/bin/fcitx5-remote -c";
+      name = "Fcitx English input";
+    };
+    "org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/fcitx-japanese" = {
+      binding = "XF86Launch6";
+      command = "${pkgs.fcitx5}/bin/fcitx5-remote -o";
+      name = "Fcitx Japanese input";
+    };
+  };
+
   programs = {
     bat.enable = true;
     direnv = {
