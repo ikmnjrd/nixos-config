@@ -278,6 +278,9 @@
       };
 
       initContent = ''
+        # Keep standard shell shortcuts even though EDITOR/VISUAL point to nvim.
+        bindkey -e
+
         export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border --preview "bat --color=always --style=header,grid --line-range :100 {}"'
         export FZF_CTRL_R_OPTS="
           --preview 'echo {}' --preview-window up:3:hidden:wrap
