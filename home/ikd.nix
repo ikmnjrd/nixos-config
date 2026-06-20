@@ -12,6 +12,7 @@
     ];
 
     packages = with pkgs; [
+      _1password-cli
       claude-code
       fd
       gh
