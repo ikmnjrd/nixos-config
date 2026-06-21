@@ -11,6 +11,11 @@
       "$HOME/.local/bin"
     ];
 
+    sessionVariables = {
+      # Deno itself is upgraded through the pinned Nixpkgs input.
+      DENO_NO_UPDATE_CHECK = "1";
+    };
+
     packages = with pkgs; [
       _1password-cli
       claude-code
