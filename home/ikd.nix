@@ -17,7 +17,6 @@
     };
 
     packages = with pkgs; [
-      _1password-cli
       claude-code
       deno
       fd

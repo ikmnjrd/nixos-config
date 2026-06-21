@@ -226,6 +226,14 @@ in
   # Install firefox.
   programs.firefox.enable = true;
 
+  # Install the 1Password desktop app and CLI together so the CLI can use
+  # desktop-app authentication through the NixOS-provided Polkit policy.
+  programs._1password.enable = true;
+  programs._1password-gui = {
+    enable = true;
+    polkitPolicyOwners = [ "ikd" ];
+  };
+
   # Register Zsh as a valid login shell. User configuration is managed by
   # Home Manager.
   programs.zsh.enable = true;
