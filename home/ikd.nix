@@ -29,7 +29,7 @@
       peco
       ripgrep
       sqlite
-      source-code-pro
+      nerd-fonts.sauce-code-pro
       tree
       wl-clipboard
     ];
@@ -165,7 +165,7 @@
       settings = {
         main = {
           term = "xterm-256color";
-          font = "Source Code Pro:size=10.5";
+          font = "SauceCodePro Nerd Font:size=10.5";
           pad = "0x0";
         };
 
@@ -216,7 +216,8 @@
       plugins = with pkgs.vimPlugins; [
         coc-nvim
         vim-gina
-        vim-fern
+        nvim-tree-lua
+        nvim-web-devicons
         (nvim-treesitter.withPlugins (parsers: with parsers; [
           prisma
           rust

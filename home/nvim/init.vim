@@ -53,11 +53,82 @@ if !exists('g:vscode')
     endif
   endfunction
 
-  nnoremap <silent> <Leader>e :<C-u>Fern . -drawer<CR>
-  nnoremap <silent> <Leader>E :<C-u>Fern . -drawer -reveal=%<CR>
-  let g:fern#default_hidden = 1
-
   lua << EOF
+  vim.g.loaded_netrw = 1
+  vim.g.loaded_netrwPlugin = 1
+
+  require('nvim-tree').setup({
+    diagnostics = {
+      enable = true,
+      show_on_dirs = true,
+      icons = {
+        hint = '󰌶',
+        info = '󰋽',
+        warning = '󰀪',
+        error = '󰅚',
+      },
+    },
+    filters = {
+      dotfiles = false,
+    },
+    git = {
+      enable = true,
+      show_on_dirs = true,
+    },
+    modified = {
+      enable = true,
+    },
+    renderer = {
+      group_empty = true,
+      highlight_diagnostics = 'icon',
+      highlight_git = 'icon',
+      highlight_modified = 'icon',
+      indent_markers = {
+        enable = true,
+      },
+      icons = {
+        git_placement = 'before',
+        modified_placement = 'after',
+        show = {
+          file = true,
+          folder = true,
+          folder_arrow = true,
+          git = true,
+          modified = true,
+          diagnostics = true,
+        },
+        glyphs = {
+          modified = '●',
+          git = {
+            unstaged = 'M',
+            staged = 'S',
+            unmerged = 'U',
+            renamed = 'R',
+            untracked = '?',
+            deleted = 'D',
+            ignored = '◌',
+          },
+        },
+      },
+    },
+    update_focused_file = {
+      enable = true,
+    },
+    view = {
+      signcolumn = 'yes',
+      width = 34,
+    },
+  })
+
+  vim.keymap.set('n', '<Leader>e', '<Cmd>NvimTreeToggle<CR>', {
+    desc = 'Toggle file explorer',
+    silent = true,
+  })
+  vim.keymap.set('n', '<Leader>E', '<Cmd>NvimTreeFindFile<CR>', {
+    desc = 'Reveal current file in explorer',
+    silent = true,
+  })
+
   local window_index = vim.env.TMUX_PANE
     and vim.fn.system({ 'tmux', 'display-message', '-p', '-t', vim.env.TMUX_PANE, '#{window_index}' }):gsub('%s+$', '')
     or ''
