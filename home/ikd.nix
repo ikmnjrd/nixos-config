@@ -252,7 +252,7 @@ in
       settings = {
         main = {
           term = "xterm-256color";
-          font = "SauceCodePro Nerd Font:size=10.5";
+          font = "SauceCodePro Nerd Font:size=12";
           pad = "0x0";
         };
 
