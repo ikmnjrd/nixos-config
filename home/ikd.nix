@@ -1,5 +1,77 @@
 { pkgs, ... }:
 
+let
+  fcitxIdleEnglish = pkgs.writeTextFile {
+    name = "fcitx-idle-english";
+    destination = "/bin/fcitx-idle-english";
+    executable = true;
+    text = ''
+      #!${pkgs.gjs}/bin/gjs
+
+      const { Gio, GLib, GLibUnix } = imports.gi;
+
+      const busName = "org.gnome.Mutter.IdleMonitor";
+      const objectPath = "/org/gnome/Mutter/IdleMonitor/Core";
+      const interfaceName = "org.gnome.Mutter.IdleMonitor";
+      const loop = GLib.MainLoop.new(null, false);
+      let watchId = 0;
+
+      const proxy = Gio.DBusProxy.new_for_bus_sync(
+        Gio.BusType.SESSION,
+        Gio.DBusProxyFlags.NONE,
+        null,
+        busName,
+        objectPath,
+        interfaceName,
+        null,
+      );
+
+      [watchId] = proxy.call_sync(
+        "AddIdleWatch",
+        new GLib.Variant("(t)", [15000]),
+        Gio.DBusCallFlags.NONE,
+        -1,
+        null,
+      ).deepUnpack();
+
+      proxy.connect("g-signal", (_proxy, _senderName, signalName, parameters) => {
+        if (signalName !== "WatchFired")
+          return;
+
+        const [firedWatchId] = parameters.deepUnpack();
+        if (firedWatchId !== watchId)
+          return;
+
+        Gio.Subprocess.new(
+          ["${pkgs.fcitx5}/bin/fcitx5-remote", "-c"],
+          Gio.SubprocessFlags.NONE,
+        );
+      });
+
+      function shutdown() {
+        if (watchId !== 0) {
+          try {
+            proxy.call_sync(
+              "RemoveWatch",
+              new GLib.Variant("(u)", [watchId]),
+              Gio.DBusCallFlags.NONE,
+              -1,
+              null,
+            );
+          } catch (error) {
+            logError(error);
+          }
+        }
+        loop.quit();
+        return GLib.SOURCE_REMOVE;
+      }
+
+      GLibUnix.signal_add(GLib.PRIORITY_DEFAULT, 2, shutdown);
+      GLibUnix.signal_add(GLib.PRIORITY_DEFAULT, 15, shutdown);
+      loop.run();
+    '';
+  };
+in
 {
   home = {
     username = "ikd";
@@ -26,6 +98,7 @@
       git-lfs
       glow
       jq
+      lazygit
       peco
       ripgrep
       sqlite
@@ -152,6 +225,20 @@
     };
   };
 
+  systemd.user.services.fcitx-idle-english = {
+    Unit = {
+      Description = "Switch Fcitx5 to English after 15 seconds of inactivity";
+      After = [ "fcitx5-daemon.service" ];
+      PartOf = [ "graphical-session.target" ];
+    };
+    Service = {
+      ExecStart = "${fcitxIdleEnglish}/bin/fcitx-idle-english";
+      Restart = "on-failure";
+      RestartSec = 1;
+    };
+    Install.WantedBy = [ "graphical-session.target" ];
+  };
+
   programs = {
     bat.enable = true;
     direnv = {
@@ -218,6 +305,7 @@
         vim-gina
         nvim-tree-lua
         nvim-web-devicons
+        toggleterm-nvim
         (nvim-treesitter.withPlugins (parsers: with parsers; [
           prisma
           rust

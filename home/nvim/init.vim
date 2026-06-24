@@ -129,6 +129,60 @@ if !exists('g:vscode')
     silent = true,
   })
 
+  require('toggleterm').setup({
+    direction = 'float',
+    open_mapping = [[<C-\>]],
+    persist_mode = true,
+    shade_terminals = false,
+    float_opts = {
+      border = 'curved',
+      width = function()
+        return math.floor(vim.o.columns * 0.95)
+      end,
+      height = function()
+        return math.floor(vim.o.lines * 0.90)
+      end,
+    },
+  })
+
+  local lazygit = require('toggleterm.terminal').Terminal:new({
+    cmd = 'lazygit',
+    direction = 'float',
+    dir = 'git_dir',
+    hidden = true,
+    float_opts = {
+      border = 'curved',
+      width = function()
+        return math.floor(vim.o.columns * 0.95)
+      end,
+      height = function()
+        return math.floor(vim.o.lines * 0.90)
+      end,
+    },
+    on_open = function(terminal)
+      vim.cmd.startinsert()
+      vim.keymap.set('t', '<Esc><Esc>', [[<C-\><C-n>]], {
+        buffer = terminal.bufnr,
+        desc = 'Leave terminal mode',
+        silent = true,
+      })
+      vim.keymap.set('t', '<C-g>', function()
+        terminal:toggle()
+      end, {
+        buffer = terminal.bufnr,
+        desc = 'Close lazygit',
+        silent = true,
+      })
+    end,
+  })
+
+  vim.keymap.set('n', '<Leader>gg', function()
+    lazygit:toggle()
+  end, {
+    desc = 'Open lazygit',
+    silent = true,
+  })
+
   local window_index = vim.env.TMUX_PANE
     and vim.fn.system({ 'tmux', 'display-message', '-p', '-t', vim.env.TMUX_PANE, '#{window_index}' }):gsub('%s+$', '')
     or ''
