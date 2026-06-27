@@ -417,6 +417,66 @@ in
         set -g terminal-overrides 'xterm*:smcup@:rmcup@'
         set -ag terminal-overrides ",$TERM:Tc"
         set -g bell-action any
+        set -g prefix2 C-b
+        # Fcitxが日本語入力の状態だと、Ctrl-fがtmux標準のprefixであるC-bとして届き、
+        # 後続のASCIIキーが全角文字として届くことがある。その状態でもtmuxに無視されないよう、
+        # 実用上使うprefixバインドを全角文字側にも複製する。
+        # 全角の<と>は意図的に省いている。tmux標準の割り当てがセミコロン区切りの
+        # サブコマンドを含む長いdisplay-menuで、ここに複製すると壊れやすい割に利用頻度が低い。
+        bind-key ！ break-pane
+        bind-key ＂ split-window
+        bind-key ＃ list-buffers
+        bind-key ＄ command-prompt -I "#S" { rename-session "%%" }
+        bind-key ％ split-window -h
+        bind-key ＆ confirm-before -p "kill-window #W? (y/n)" kill-window
+        bind-key ＇ command-prompt -T window-target -p index { select-window -t ":%%" }
+        bind-key （ switch-client -p
+        bind-key ） switch-client -n
+        bind-key ， command-prompt -I "#W" { rename-window "%%" }
+        bind-key － select-layout main-vertical
+        bind-key ． command-prompt -T target { move-window -t "%%" }
+        bind-key ／ command-prompt -k -p key { list-keys -1N "%%" }
+        bind-key ０ select-window -t :=0
+        bind-key １ select-window -t :=1
+        bind-key ２ select-window -t :=2
+        bind-key ３ select-window -t :=3
+        bind-key ４ select-window -t :=4
+        bind-key ５ select-window -t :=5
+        bind-key ６ select-window -t :=6
+        bind-key ７ select-window -t :=7
+        bind-key ８ select-window -t :=8
+        bind-key ９ select-window -t :=9
+        bind-key ： command-prompt
+        bind-key ； last-pane
+        bind-key ＝ choose-buffer -Z
+        bind-key ？ list-keys -N
+        bind-key ［ copy-mode
+        bind-key ］ paste-buffer -p
+        bind-key ｛ swap-pane -U
+        bind-key ｜ select-layout even-vertical
+        bind-key ｝ swap-pane -D
+        bind-key ～ show-messages
+        bind-key Ｃ customize-mode -Z
+        bind-key Ｄ choose-client -Z
+        bind-key Ｅ select-layout -E
+        bind-key Ｌ switch-client -l
+        bind-key Ｍ select-pane -M
+        bind-key ｃ new-window
+        bind-key ｄ detach-client
+        bind-key ｆ command-prompt { find-window -Z "%%" }
+        bind-key ｉ display-message
+        bind-key ｌ last-window
+        bind-key ｍ select-pane -m
+        bind-key ｎ next-window
+        bind-key ｏ select-pane -t :.+
+        bind-key ｐ previous-window
+        bind-key ｑ display-panes
+        bind-key ｒ refresh-client
+        bind-key ｓ choose-tree -Zs
+        bind-key ｔ clock-mode
+        bind-key ｗ choose-tree -Zw
+        bind-key ｘ confirm-before -p "kill-pane #P? (y/n)" kill-pane
+        bind-key ｚ resize-pane -Z
         bind-key | select-layout even-vertical
         bind-key - select-layout main-vertical
         set-hook -g after-new-window \
