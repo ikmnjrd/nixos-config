@@ -3,6 +3,7 @@
 {
   imports = [
     ./flatpak.nix
+    ./stylix.nix
   ];
 
   boot.loader.systemd-boot.enable = true;

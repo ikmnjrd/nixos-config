@@ -8,15 +8,20 @@
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    stylix = {
+      url = "github:nix-community/stylix/release-26.05";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { nixpkgs, nix-flatpak, home-manager, ... }:
+  outputs = { nixpkgs, nix-flatpak, home-manager, stylix, ... }:
     let
       system = "x86_64-linux";
 
       subPc = nixpkgs.lib.nixosSystem {
         inherit system;
         modules = [
+          stylix.nixosModules.stylix
           nix-flatpak.nixosModules.nix-flatpak
           home-manager.nixosModules.home-manager
           ./hosts/nixos/configuration.nix
@@ -35,7 +40,7 @@
               useGlobalPkgs = true;
               useUserPackages = true;
               backupFileExtension = "hm-backup";
-              users.ikd = import ./home/ikd.nix {};
+              users.ikd = import ./home/ikd.nix;
             };
           }
         ];
@@ -46,6 +51,7 @@
         legoship = nixpkgs.lib.nixosSystem {
           inherit system;
           modules = [
+            stylix.nixosModules.stylix
             nix-flatpak.nixosModules.nix-flatpak
             home-manager.nixosModules.home-manager
             ./hosts/legoship/configuration.nix

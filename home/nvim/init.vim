@@ -4,6 +4,10 @@ set clipboard=unnamedplus
 set shell=/run/current-system/sw/bin/zsh
 set history=200
 set incsearch
+set cursorline
+set cursorcolumn
+set cursorlineopt=both
+set guicursor=n-v-c:block-Cursor,i-ci-ve:block-CursorInsert,r-cr:hor20,o:hor50
 set nrformats=octal,hex,alpha
 set nocompatible
 filetype plugin on
@@ -209,6 +213,13 @@ if !exists('g:vscode')
   for _, group in ipairs({ 'Normal', 'NormalNC', 'NormalFloat', 'SignColumn', 'EndOfBuffer' }) do
     vim.api.nvim_set_hl(0, group, { bg = 'NONE' })
   end
+  vim.api.nvim_set_hl(0, 'CursorLine', { bg = '#3b4252' })
+  vim.api.nvim_set_hl(0, 'CursorColumn', { bg = '#434c5e' })
+  vim.api.nvim_set_hl(0, 'CursorLineNr', { fg = '#88c0d0', bold = true })
+  vim.api.nvim_set_hl(0, 'Cursor', { fg = '#2e3440', bg = '#eceff4' })
+  vim.api.nvim_set_hl(0, 'CursorInsert', { fg = '#2e3440', bg = '#ebcb8b' })
+  vim.api.nvim_set_hl(0, 'Whitespace', { fg = '#5e81ac' })
+  vim.api.nvim_set_hl(0, 'SpecialKey', { fg = '#5e81ac' })
 EOF
 endif
 
