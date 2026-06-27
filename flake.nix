@@ -8,10 +8,9 @@
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nix-claude-code.url = "github:ryoppippi/nix-claude-code";
   };
 
-  outputs = { nixpkgs, nix-flatpak, home-manager, nix-claude-code, ... }:
+  outputs = { nixpkgs, nix-flatpak, home-manager, ... }:
     let
       system = "x86_64-linux";
 
@@ -28,9 +27,7 @@
                 builtins.elem (lib.getName pkg) [
                   "1password"
                   "1password-cli"
-                  "claude"
                 ];
-              overlays = [ nix-claude-code.overlays.default ];
             };
           })
           {
@@ -52,9 +49,6 @@
             nix-flatpak.nixosModules.nix-flatpak
             home-manager.nixosModules.home-manager
             ./hosts/legoship/configuration.nix
-            {
-              nixpkgs.overlays = [ nix-claude-code.overlays.default ];
-            }
             {
               home-manager = {
                 useGlobalPkgs = true;

@@ -57,6 +57,19 @@
     }
   ];
 
+  # Claude Codeのネイティブインストーラ版が配布する動的リンク済み実行ファイル用。
+  programs.nix-ld = {
+    enable = true;
+
+    libraries = with pkgs; [
+      stdenv.cc.cc
+      zlib
+      openssl
+      curl
+      sqlite
+    ];
+  };
+
   services.xserver.xkb = {
     layout = "us";
     variant = "";
@@ -114,7 +127,7 @@
   nixpkgs.config.allowUnfree = true;
 
   environment.systemPackages = with pkgs; [
-    codex
+    curl
     fd
     gh
     git

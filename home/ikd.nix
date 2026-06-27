@@ -45,7 +45,7 @@ in
     inherit username homeDirectory;
     stateVersion = "26.05";
 
-    #現状はcodex(cli)用
+    # ユーザー管理のCLIをNix管理パッケージより優先する。
     sessionPath = [
       "$HOME/.local/bin"
     ];
@@ -58,7 +58,6 @@ in
     };
 
     packages = with pkgs; [
-      claude-code
       deno
       fd
       gh
@@ -119,6 +118,49 @@ in
 
           theme="$("$HOME/.config/tmux/window-theme" "" bat)"
           exec ${pkgs.bat}/bin/bat --theme "$theme" "$@"
+        '';
+      };
+      ".local/bin/ai-tools-update" = {
+        executable = true;
+        text = ''
+          #!/bin/sh
+          set -eu
+
+          local_bin="$HOME/.local/bin"
+          export PATH="$local_bin:$PATH"
+
+          need_cmd() {
+            if ! command -v "$1" >/dev/null 2>&1; then
+              printf '%s\n' "missing required command: $1" >&2
+              exit 1
+            fi
+          }
+
+          need_cmd curl
+          need_cmd sh
+          need_cmd bash
+
+          mkdir -p "$local_bin"
+          tmp_dir="$(mktemp -d)"
+          trap 'rm -rf "$tmp_dir"' EXIT
+
+          # Claude Codeは公式のネイティブインストーラでlatestチャンネルを使う。
+          printf '%s\n' "Updating Claude Code..."
+          curl -fsSL https://claude.ai/install.sh -o "$tmp_dir/claude-install.sh"
+          bash "$tmp_dir/claude-install.sh" latest
+
+          # Codex CLIは公式のCodexインストーラで更新する。
+          printf '%s\n' "Updating Codex..."
+          curl -fsSL https://chatgpt.com/codex/install.sh -o "$tmp_dir/codex-install.sh"
+          sh "$tmp_dir/codex-install.sh"
+
+          printf '\n%s\n' "Installed versions:"
+          if command -v claude >/dev/null 2>&1; then
+            claude --version || true
+          fi
+          if command -v codex >/dev/null 2>&1; then
+            codex --version || true
+          fi
         '';
       };
       ".config/tmux/apply-window-theme" = {

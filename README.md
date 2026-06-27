@@ -103,6 +103,29 @@ op --version
 op vault list
 ```
 
+## AI 開発ツール
+
+Claude Code と Codex CLI は、Nixpkgs や Flake の更新待ちを避けるため、
+ツール本体を宣言的管理から外しています。NixOS 側では更新に必要な `curl` と
+ユーザー用の更新コマンドだけを管理します。
+
+初回インストールと更新は、各ユーザーで次を実行します。
+
+```sh
+ai-tools-update
+```
+
+このコマンドは公式インストーラを使い、Claude Code は `latest` チャンネル、
+Codex は公式 Codex インストーラの最新版へ更新します。インストール先は
+`~/.local/bin` です。Codex App の Linux 向け非公式配布は現時点では使いません。
+
+NixOS の構成を反映した直後は、古い Nix 管理版の `claude` や `codex` が
+残っていないか確認します。
+
+```sh
+which -a claude codex
+```
+
 ## ロールバック
 
 過去の世代を一覧表示し、以前の構成へ戻すには次を実行します。
