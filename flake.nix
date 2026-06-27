@@ -1,5 +1,5 @@
 {
-  description = "NixOS configuration for nixos";
+  description = "NixOS configurations";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
@@ -11,35 +11,62 @@
     nix-claude-code.url = "github:ryoppippi/nix-claude-code";
   };
 
-  outputs = { nixpkgs, nix-flatpak, home-manager, nix-claude-code, ... }: {
-    nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
+  outputs = { nixpkgs, nix-flatpak, home-manager, nix-claude-code, ... }:
+    let
       system = "x86_64-linux";
-      modules = [
-        nix-flatpak.nixosModules.nix-flatpak
-        home-manager.nixosModules.home-manager
-        ./hosts/nixos/configuration.nix
-        ./hosts/nixos/flatpak.nix
-        ./hosts/nixos/repository.nix
-        ({ lib, ... }: {
-          nixpkgs = {
-            config.allowUnfreePredicate = pkg:
-              builtins.elem (lib.getName pkg) [
-                "1password"
-                "1password-cli"
-                "claude"
-              ];
-            overlays = [ nix-claude-code.overlays.default ];
-          };
-        })
-        {
-          home-manager = {
-            useGlobalPkgs = true;
-            useUserPackages = true;
-            backupFileExtension = "hm-backup";
-            users.ikd = import ./home/ikd.nix;
-          };
-        }
-      ];
+
+      subPc = nixpkgs.lib.nixosSystem {
+        inherit system;
+        modules = [
+          nix-flatpak.nixosModules.nix-flatpak
+          home-manager.nixosModules.home-manager
+          ./hosts/nixos/configuration.nix
+          ./hosts/nixos/repository.nix
+          ({ lib, ... }: {
+            nixpkgs = {
+              config.allowUnfreePredicate = pkg:
+                builtins.elem (lib.getName pkg) [
+                  "1password"
+                  "1password-cli"
+                  "claude"
+                ];
+              overlays = [ nix-claude-code.overlays.default ];
+            };
+          })
+          {
+            home-manager = {
+              useGlobalPkgs = true;
+              useUserPackages = true;
+              backupFileExtension = "hm-backup";
+              users.ikd = import ./home/ikd.nix {};
+            };
+          }
+        ];
+      };
+    in
+    {
+      nixosConfigurations = {
+        legoship = nixpkgs.lib.nixosSystem {
+          inherit system;
+          modules = [
+            nix-flatpak.nixosModules.nix-flatpak
+            home-manager.nixosModules.home-manager
+            ./hosts/legoship/configuration.nix
+            {
+              nixpkgs.overlays = [ nix-claude-code.overlays.default ];
+            }
+            {
+              home-manager = {
+                useGlobalPkgs = true;
+                useUserPackages = true;
+                backupFileExtension = "hm-backup";
+                users.ike = import ./home/ike.nix;
+              };
+            }
+          ];
+        };
+
+        nixos = subPc;
+      };
     };
-  };
 }

@@ -1,3 +1,7 @@
+{
+  username ? "ikd",
+  homeDirectory ? "/home/${username}",
+}:
 { pkgs, ... }:
 
 let
@@ -74,8 +78,7 @@ let
 in
 {
   home = {
-    username = "ikd";
-    homeDirectory = "/home/ikd";
+    inherit username homeDirectory;
     stateVersion = "26.05";
 
     #現状はcodex(cli)用

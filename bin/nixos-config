@@ -3,7 +3,7 @@
 set -euo pipefail
 
 root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-host="nixos"
+host="${NIXOS_CONFIG_HOST:-legoship}"
 flake="path:${root}#${host}"
 nix_flags=(--extra-experimental-features "nix-command flakes")
 if [[ -n "${NIX_CONFIG:-}" ]]; then
@@ -15,6 +15,9 @@ fi
 usage() {
   cat <<'EOF'
 Usage: bin/nixos-config <command>
+
+Environment:
+  NIXOS_CONFIG_HOST  Host to manage; defaults to legoship
 
 Commands:
   sync-from-etc  Show differences and import /etc/nixos into this repository
@@ -30,6 +33,11 @@ sync_from_etc() {
   local target_dir="${root}/hosts/${host}"
   local changed=0
   local file
+
+  if [[ ! -d "${target_dir}" ]]; then
+    echo "Unknown host '${host}': ${target_dir} does not exist." >&2
+    exit 1
+  fi
 
   for file in configuration.nix hardware-configuration.nix; do
     if ! cmp -s "${source_dir}/${file}" "${target_dir}/${file}"; then

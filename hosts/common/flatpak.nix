@@ -29,7 +29,6 @@
         onCalendar = "Mon,Thu *-*-* 03:00:00";
       };
     };
-
   };
 
   xdg.mime = {

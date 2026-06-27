@@ -1,16 +1,17 @@
 # nixos-config
 
-このリポジトリは、ホスト名 `nixos` の NixOS 構成を管理するための
-信頼できる唯一の情報源です。NixOS 26.05 ブランチに固定した Flake を
-使用しています。
+このリポジトリは、メインPC `legoship` とサブPC `nixos` の NixOS 構成を
+管理するための信頼できる唯一の情報源です。NixOS 26.05 ブランチに固定した
+Flake を使用しています。
 
 ## 初期セットアップ
 
 このリポジトリは、現在の `/etc/nixos` の内容を元に作成しました。
 緊急時に `/etc/nixos` から設定を取り込んでも Flake のサポートが
-失われないように、Nix の設定は `hosts/nixos/repository.nix` に分離して
-います。ユーザー `ikd` の開発環境は Home Manager を使い、
-`home/ikd.nix` で管理します。
+失われないように、サブPC側の Nix の設定は `hosts/nixos/repository.nix` に
+分離しています。ユーザーの開発環境は Home Manager を使い、共通設定を
+`home/ikd.nix`、メインPC `legoship` の適用設定を `home/ike.nix` で管理します。
+メインPC `legoship` は `hosts/legoship` で管理します。
 
 初回の切り替え前に設定内容を確認し、次を実行します。
 
@@ -19,7 +20,7 @@
 ./bin/nixos-config build
 sudo nixos-rebuild switch \
   --option experimental-features "nix-command flakes" \
-  --flake "path:$PWD#nixos"
+  --flake "path:$PWD#legoship"
 ```
 
 リポジトリは `main` をデフォルトブランチとして初期化済みです。
@@ -28,14 +29,23 @@ sudo nixos-rebuild switch \
 
 ## 日常的な操作
 
-システム設定は `hosts/nixos`、ユーザー環境は `home/ikd.nix` 以下を編集し、
-検証してから反映します。
+共通のシステム設定は `hosts/common`、メインPC固有の設定は `hosts/legoship`、
+サブPC固有の設定は `hosts/nixos`、共通のユーザー環境は `home/ikd.nix`、
+メインPCのユーザー環境は `home/ike.nix` 以下を編集し、検証してから反映します。
+`./bin/nixos-config` はデフォルトで
+`legoship` を対象にします。サブPCを対象にする場合は
+`NIXOS_CONFIG_HOST=nixos` を付けます。
 
 ```sh
 ./bin/nixos-config check
 ./bin/nixos-config build
 ./bin/nixos-config test
 ./bin/nixos-config switch
+```
+
+```sh
+NIXOS_CONFIG_HOST=nixos ./bin/nixos-config check
+NIXOS_CONFIG_HOST=nixos ./bin/nixos-config build
 ```
 
 `test` は起動時のデフォルト世代を変更せず、一時的に構成を有効化します。
@@ -58,7 +68,7 @@ sudo nixos-rebuild switch \
 ## Flatpak アプリケーション
 
 システム全体で使用する Flatpak アプリケーションとリモートは
-`hosts/nixos/flatpak.nix` で宣言します。Flathub は自動的に登録され、
+`hosts/common/flatpak.nix` で宣言します。Flathub は自動的に登録され、
 宣言したアプリケーションは NixOS の有効化後に
 `flatpak-managed-install` systemd サービスによってインストールされます。
 
@@ -102,7 +112,7 @@ sudo nixos-rebuild list-generations
 sudo nixos-rebuild switch --rollback
 ```
 
-`hosts/nixos/hardware-configuration.nix` は、このマシンのディスクや
+各ホストの `hardware-configuration.nix` は、そのマシンのディスクや
 ハードウェア構成を記述しているため管理対象に含めていますが、通常は手動で
 編集しません。
 
@@ -114,7 +124,9 @@ sudo nixos-rebuild switch --rollback
 管理対象ファイルへリンクします。
 
 `home/ikd.nix` はGit、Git LFS、GitHub CLI、Neovim、foot、Zsh、tmux、
-fzf、batと開発用CLIをユーザー単位で管理します。既存の管理対象ファイルと
+fzf、batと開発用CLIをユーザー単位で管理する共通モジュールです。
+`home/ike.nix` は同じ設定をメインPCの `/home/ike` に適用します。
+既存の管理対象ファイルと
 衝突した場合は、初回の有効化時に拡張子 `.hm-backup` で退避します。
 
 ## Remote development host
