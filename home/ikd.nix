@@ -2,7 +2,7 @@
   username ? "ikd",
   homeDirectory ? "/home/${username}",
 }:
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 
 let
   fcitxIdleEnglish = pkgs.writeTextFile {
@@ -89,6 +89,8 @@ in
     sessionVariables = {
       # Deno itself is upgraded through the pinned Nixpkgs input.
       DENO_NO_UPDATE_CHECK = "1";
+      QT_IM_MODULE = "fcitx";
+      QT_IM_MODULES = "wayland;fcitx";
     };
 
     packages = with pkgs; [
@@ -207,8 +209,16 @@ in
   };
 
   dconf.settings = {
+    "org/gnome/shell" = {
+      enabled-extensions = [ "kimpanel@kde.org" ];
+    };
     "org/gnome/mutter" = {
       overlay-key = "F1";
+    };
+    "org/gnome/settings-daemon/plugins/xsettings" = {
+      overrides = [
+        (lib.gvariant.mkDictionaryEntry "Gtk/IMModule" (lib.gvariant.mkVariant "fcitx"))
+      ];
     };
     "org/gnome/settings-daemon/plugins/media-keys" = {
       custom-keybindings = [
@@ -231,7 +241,7 @@ in
   systemd.user.services.fcitx-idle-english = {
     Unit = {
       Description = "Switch Fcitx5 to English after 15 seconds of inactivity";
-      After = [ "fcitx5-daemon.service" ];
+      After = [ "graphical-session.target" ];
       PartOf = [ "graphical-session.target" ];
     };
     Service = {
