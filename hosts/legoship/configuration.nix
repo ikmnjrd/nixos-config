@@ -8,6 +8,20 @@
 
   networking.hostName = "legoship";
 
+  programs.steam.enable = true;
+
+  services.flatpak.packages = [
+    {
+      appId = "com.discordapp.Discord";
+      origin = "flathub";
+    }
+  ];
+
+  environment.systemPackages = with pkgs; [
+    google-chrome
+    slack
+  ];
+
   users.users.ike = {
     isNormalUser = true;
     description = "ike";

@@ -16,10 +16,6 @@
         appId = "com.brave.Browser";
         origin = "flathub";
       }
-      {
-        appId = "com.valvesoftware.Steam";
-        origin = "flathub";
-      }
     ];
 
     update = {
