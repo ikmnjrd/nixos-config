@@ -75,6 +75,40 @@ let
       loop.run();
     '';
   };
+  pscircleWallpaper = pkgs.writeShellApplication {
+    name = "pscircle-wallpaper";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.glib
+      pkgs.pscircle
+    ];
+    text = ''
+      wallpaper_dir="''${XDG_CACHE_HOME:-$HOME/.cache}/pscircle"
+      wallpaper_index=$(( ($(date +%s) / 30) % 2 ))
+      wallpaper="$wallpaper_dir/wallpaper-$wallpaper_index.png"
+      wallpaper_uri="file://$wallpaper"
+
+      mkdir -p "$wallpaper_dir"
+
+      pscircle \
+        --background-color=2e3440 \
+        --tree-font-color=d8dee9 \
+        --dot-color-min=81a1c1 \
+        --dot-color-max=bf616a \
+        --dot-border-color-min=e5e9f0 \
+        --dot-border-color-max=eceff4 \
+        --link-color-min=4c566a \
+        --link-color-max=88c0d0 \
+        --toplists-font-color=d8dee9 \
+        --toplists-pid-font-color=88c0d0 \
+        --toplists-bar-background=3b4252 \
+        --toplists-bar-color=a3be8c \
+        --output="$wallpaper"
+
+      gsettings set org.gnome.desktop.background picture-uri "$wallpaper_uri"
+      gsettings set org.gnome.desktop.background picture-uri-dark "$wallpaper_uri"
+    '';
+  };
 in
 {
   home = {
@@ -105,6 +139,7 @@ in
       jq
       lazygit
       peco
+      pscircle
       ripgrep
       sqlite
       nerd-fonts.sauce-code-pro
@@ -210,15 +245,27 @@ in
 
   dconf.settings = {
     "org/gnome/shell" = {
-      enabled-extensions = [ "kimpanel@kde.org" ];
+      enabled-extensions = [
+        "kimpanel@kde.org"
+      ];
     };
     "org/gnome/mutter" = {
-      overlay-key = "F1";
+      overlay-key = "";
+    };
+    "org/gnome/shell/keybindings" = {
+      toggle-overview = [ "<Super>d" ];
     };
     "org/gnome/settings-daemon/plugins/xsettings" = {
       overrides = [
         (lib.gvariant.mkDictionaryEntry "Gtk/IMModule" (lib.gvariant.mkVariant "fcitx"))
       ];
+    };
+    "org/gnome/desktop/background" = {
+      picture-uri = "file://${homeDirectory}/.cache/pscircle/wallpaper-0.png";
+      picture-uri-dark = "file://${homeDirectory}/.cache/pscircle/wallpaper-0.png";
+      picture-options = "zoom";
+      primary-color = "#2e3440";
+      secondary-color = "#2e3440";
     };
     "org/gnome/settings-daemon/plugins/media-keys" = {
       custom-keybindings = [
@@ -250,6 +297,30 @@ in
       RestartSec = 1;
     };
     Install.WantedBy = [ "graphical-session.target" ];
+  };
+
+  systemd.user.services.pscircle-wallpaper = {
+    Unit = {
+      Description = "Render the process tree wallpaper for GNOME";
+      After = [ "graphical-session.target" ];
+      PartOf = [ "graphical-session.target" ];
+    };
+    Service = {
+      Type = "oneshot";
+      ExecStart = "${pscircleWallpaper}/bin/pscircle-wallpaper";
+    };
+  };
+
+  systemd.user.timers.pscircle-wallpaper = {
+    Unit = {
+      Description = "Refresh the process tree wallpaper";
+    };
+    Timer = {
+      OnBootSec = "20s";
+      OnUnitActiveSec = "30s";
+      Unit = "pscircle-wallpaper.service";
+    };
+    Install.WantedBy = [ "timers.target" ];
   };
 
   programs = {
