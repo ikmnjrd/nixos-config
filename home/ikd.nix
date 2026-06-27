@@ -255,6 +255,10 @@ in
     "org/gnome/shell/keybindings" = {
       toggle-overview = [ "<Super>d" ];
     };
+    "org/gnome/desktop/wm/keybindings" = {
+      switch-to-workspace-left = [ "<Control>Left" ];
+      switch-to-workspace-right = [ "<Control>Right" ];
+    };
     "org/gnome/settings-daemon/plugins/xsettings" = {
       overrides = [
         (lib.gvariant.mkDictionaryEntry "Gtk/IMModule" (lib.gvariant.mkVariant "fcitx"))
@@ -417,9 +421,16 @@ in
         set -g terminal-overrides 'xterm*:smcup@:rmcup@'
         set -ag terminal-overrides ",$TERM:Tc"
         set -g bell-action any
-        set -g prefix2 C-b
-        # Fcitxが日本語入力の状態だと、Ctrl-fがtmux標準のprefixであるC-bとして届き、
-        # 後続のASCIIキーが全角文字として届くことがある。その状態でもtmuxに無視されないよう、
+        # prefixとして特別扱いされるキーではコマンドを実行できないため、Home Managerが設定した
+        # prefixを無効化し、root tableのバインドでIMEを英数へ戻してからprefix tableへ移る。
+        # Fcitxが日本語入力の状態だと、Ctrl-fがtmux標準のprefixであるC-bとして届くことがあるため、
+        # C-bにも同じ処理を入れている。
+        set -g prefix None
+        bind-key -n C-f run-shell -b '${pkgs.fcitx5}/bin/fcitx5-remote -c' \; switch-client -T prefix
+        bind-key -n C-b run-shell -b '${pkgs.fcitx5}/bin/fcitx5-remote -c' \; switch-client -T prefix
+        bind-key C-f send-keys C-f
+        bind-key C-b send-keys C-b
+        # IMEを戻す前に後続のASCIIキーが全角文字として届く場合もあるため、
         # 実用上使うprefixバインドを全角文字側にも複製する。
         # 全角の<と>は意図的に省いている。tmux標準の割り当てがセミコロン区切りの
         # サブコマンドを含む長いdisplay-menuで、ここに複製すると壊れやすい割に利用頻度が低い。
