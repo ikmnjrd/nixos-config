@@ -1,0 +1,28 @@
+# respect: https://hub.espanso.org/apple-symbols
+matches:
+  - triggers: [";alt", ";opt"]
+    replace: "⌥"
+
+  - trigger: ";bs"
+    replace: "⌫"
+
+  - trigger: ";cmd"
+    replace: "⌘"
+
+  - trigger: ";ctrl"
+    replace: "⌃"
+
+  - trigger: ";shift"
+    replace: "⇧"
+
+  - trigger: ";tab"
+    replace: "⇥"
+
+  - trigger: ";cap"
+    replace: "⇪"
+
+  - trigger: ";eject"
+    replace: "⏏︎"
+
+  - trigger: ";esc"
+    replace: "␛"

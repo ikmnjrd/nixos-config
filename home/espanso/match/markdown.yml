@@ -1,0 +1,49 @@
+# Markdown snippets
+matches:
+  # code block
+  - trigger:  ";mdcode"
+    replace: "```$|$\n```"
+
+  # detail
+  - trigger: ";mddetail"
+    replace: "<details>\n  <summary>$|$</summary>\n  <p></p>\n</details>"
+
+  # empty checkbox. 丸括弧内には優先度を[A-Z]で書く
+  - trigger: ";mdch"
+    replace: "- [ ] ($|$)"
+
+  # image with clipboard
+  - trigger: ";mdimg"
+    replace: "![$|$]({{clipboard}})"
+    vars:
+      - name: "clipboard"
+        type: "clipboard"
+
+  # link with clipboard 
+  - trigger: ";mdlink"
+    replace: "[$|$]({{clipboard}})"
+    vars:
+      - name: "clipboard"
+        type: "clipboard"
+
+  # link with clipboard 
+  - trigger: ";mdtable"
+    replace: |
+      | Center 1 | Center 2 | Center 3 |
+      |:--------:|:--------:|:--------:|
+      |  Cell 1  |  Cell 2  |  Cell 3  |
+      |  Cell 4  |  Cell 5  |  Cell 6  |
+
+  # My blog Meta base
+  - trigger: ";blogmeta"
+    replace: |
+             title: $|$
+             date: {{mydate}}
+             tag:
+              - misc
+    vars:
+      - name: mydate
+        type: date
+        params:
+          format: "%Y-%m-%d"
+

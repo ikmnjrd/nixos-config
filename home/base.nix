@@ -217,6 +217,24 @@
     };
   };
 
+  services.espanso = {
+    enable = true;
+    configs = { };
+    matches = { };
+  };
+
+  xdg.configFile = {
+    "espanso/config/default.yml".source = ./espanso/config/default.yml;
+    "espanso/match/all-emoji.yml".source = ./espanso/match/all-emoji.yml;
+    "espanso/match/apple-symbol.yml".source = ./espanso/match/apple-symbol.yml;
+    "espanso/match/arrow.yml".source = ./espanso/match/arrow.yml;
+    "espanso/match/base.yml".source = ./espanso/match/base.yml;
+    "espanso/match/coding.yml".source = ./espanso/match/coding.yml;
+    "espanso/match/curl.yml".source = ./espanso/match/curl.yml;
+    "espanso/match/hax.yml".source = ./espanso/match/hax.yml;
+    "espanso/match/markdown.yml".source = ./espanso/match/markdown.yml;
+  };
+
   programs = {
     bat.enable = true;
     direnv = {

@@ -1,0 +1,24 @@
+      
+matches:
+
+# JavaScript & Web Development
+
+# Inserts console.log statement 
+- trigger: ":con"
+  replace: "console.log($|$);"
+
+# JS console.log, will print variable name and value of a variable in your clipboard
+- trigger: ":print"
+  replace: "console.log({ {{clipboard}} });"
+  vars: [{ name: "clipboard", type: "clipboard"}]
+
+  
+# Inserts any custom HTML, XML or web component tag 
+- trigger: ":tag"
+  replace: "<{{html.element}}>$|$</{{html.element}}>"
+  vars:
+  - name: "html"
+    type: form
+    params:
+      layout: "XML / HTML Element Inserter\nTag Name: {{element}}"
+      fields: { element: { type: text }}
