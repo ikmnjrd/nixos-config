@@ -4,6 +4,38 @@
 }:
 { lib, pkgs, ... }:
 
+let
+  espansoWlPaste = pkgs.writeShellScriptBin "wl-paste" ''
+    out_file="$(mktemp)"
+    err_file="$(mktemp)"
+    if ${pkgs.wl-clipboard}/bin/wl-paste "$@" >"$out_file" 2>"$err_file"; then
+      if cat "$out_file" "$err_file" | grep -q "Nothing is copied"; then
+        rm -f "$out_file" "$err_file"
+        exit 0
+      fi
+
+      cat "$out_file"
+      rm -f "$out_file" "$err_file"
+      exit 0
+    fi
+
+    status="$?"
+    if [ "$status" -eq 1 ] && cat "$out_file" "$err_file" | grep -q "Nothing is copied"; then
+      rm -f "$out_file" "$err_file"
+      exit 0
+    fi
+
+    cat "$out_file"
+    cat "$err_file" >&2
+    rm -f "$out_file" "$err_file"
+    exit "$status"
+  '';
+
+  espansoWayland = pkgs.writeShellScriptBin "espanso" ''
+    export PATH="${espansoWlPaste}/bin:${pkgs.wl-clipboard}/bin:${pkgs.setxkbmap}/bin:${pkgs.libnotify}/bin:$PATH"
+    exec -a "$0" "${pkgs.espanso-wayland}/bin/.espanso-wrapped" "$@"
+  '';
+in
 {
   home = {
     inherit username homeDirectory;
@@ -219,6 +251,7 @@
 
   services.espanso = {
     enable = true;
+    package-wayland = espansoWayland;
     configs = { };
     matches = { };
   };

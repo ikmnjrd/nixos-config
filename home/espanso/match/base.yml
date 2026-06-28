@@ -18,7 +18,6 @@ matches:
         type: date
         params:
           format: "%Y%m%d"
-    force_clipboard: true
 
   # Print the output of a shell command
   - trigger: ";shell"
@@ -28,4 +27,3 @@ matches:
         type: shell
         params:
           cmd: "echo 'Hello from your shell'"
-
