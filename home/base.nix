@@ -328,6 +328,17 @@ in
   };
 
   xdg.configFile = {
+    # Nautilus(GNOME Files)のサイドバーのブックマーク。
+    # このファイルで全ブックマークを上書き管理するため、既存分も明記する。
+    "gtk-3.0/bookmarks".text = ''
+      file://${homeDirectory}/workspace workspace
+      file://${homeDirectory}/Documents Documents
+      file://${homeDirectory}/Music Music
+      file://${homeDirectory}/Pictures Pictures
+      file://${homeDirectory}/Videos Videos
+      file://${homeDirectory}/Downloads Downloads
+      file://${homeDirectory}/Videos/Screencasts Screencasts
+    '';
     "espanso/config/default.yml".source = ./espanso/config/default.yml;
     "espanso/match/all-emoji.yml".source = ./espanso/match/all-emoji.yml;
     "espanso/match/apple-symbol.yml".source = ./espanso/match/apple-symbol.yml;
