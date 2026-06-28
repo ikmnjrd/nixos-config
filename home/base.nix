@@ -253,6 +253,11 @@ in
     };
     "org/gnome/mutter" = {
       overlay-key = lib.mkForce "";
+      # Super+Shift+数字で1〜9へ確実に移動できるよう固定ワークスペースにする。
+      dynamic-workspaces = false;
+    };
+    "org/gnome/desktop/wm/preferences" = {
+      num-workspaces = 6;
     };
     "org/gnome/shell/keybindings" = {
       toggle-overview = [ "<Super>d" ];
@@ -260,6 +265,13 @@ in
     "org/gnome/desktop/wm/keybindings" = {
       switch-to-workspace-left = [ "<Control>Left" ];
       switch-to-workspace-right = [ "<Control>Right" ];
+      # Super+Shift+数字でアクティブウィンドウを対応するワークスペースへ移動する。
+      move-to-workspace-1 = [ "<Super><Shift>1" ];
+      move-to-workspace-2 = [ "<Super><Shift>2" ];
+      move-to-workspace-3 = [ "<Super><Shift>3" ];
+      move-to-workspace-4 = [ "<Super><Shift>4" ];
+      move-to-workspace-5 = [ "<Super><Shift>5" ];
+      move-to-workspace-6 = [ "<Super><Shift>6" ];
     };
     "org/gnome/settings-daemon/plugins/xsettings" = {
       overrides = [
