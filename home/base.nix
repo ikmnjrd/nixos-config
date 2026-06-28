@@ -5,6 +5,27 @@
 { lib, pkgs, ... }:
 
 let
+  aiToolsUpdatePath = lib.makeBinPath (with pkgs; [
+    bash
+    coreutils
+    curl
+    findutils
+    gawk
+    gnugrep
+    gnused
+    gnutar
+    gzip
+    git
+    nix
+    openssl
+    util-linux
+  ]);
+
+  # 公式インストーラ(standalone方式)はcurrentシンボリックリンクを最新版に向ける。
+  codexCli = pkgs.writeShellScriptBin "codex" ''
+    exec "$HOME/.codex/packages/standalone/current/bin/codex" "$@"
+  '';
+
   espansoWlPaste = pkgs.writeShellScriptBin "wl-paste" ''
     out_file="$(mktemp)"
     err_file="$(mktemp)"
@@ -53,7 +74,7 @@ in
       QT_IM_MODULES = "wayland;fcitx";
     };
 
-    packages = with pkgs; [
+    packages = (with pkgs; [
       deno
       fd
       gh
@@ -69,6 +90,9 @@ in
       nerd-fonts.sauce-code-pro
       tree
       wl-clipboard
+    ]) ++ [
+      # ターミナルでもcodexをstandalone本体へ橋渡しする(cliPackageと同一)。
+      codexCli
     ];
 
     file = {
@@ -122,7 +146,7 @@ in
           set -eu
 
           local_bin="$HOME/.local/bin"
-          export PATH="$local_bin:$PATH"
+          export PATH="$local_bin:${aiToolsUpdatePath}:''${PATH:-}"
 
           need_cmd() {
             if ! command -v "$1" >/dev/null 2>&1; then
@@ -132,8 +156,11 @@ in
           }
 
           need_cmd curl
+          need_cmd nix
           need_cmd sh
           need_cmd bash
+
+          nixos_config_dir="$HOME/workspace/nixos-config"
 
           mkdir -p "$local_bin"
           tmp_dir="$(mktemp -d)"
@@ -147,7 +174,15 @@ in
           # Codex CLIは公式のCodexインストーラで更新する。
           printf '%s\n' "Updating Codex..."
           curl -fsSL https://chatgpt.com/codex/install.sh -o "$tmp_dir/codex-install.sh"
-          sh "$tmp_dir/codex-install.sh"
+          CODEX_NON_INTERACTIVE=1 sh "$tmp_dir/codex-install.sh"
+
+          if [ -f "$nixos_config_dir/flake.nix" ]; then
+            # Codex Desktop Linuxはflake inputとしてHome Managerから導入する。
+            printf '%s\n' "Updating Codex Desktop Linux..."
+            nix flake update codex-desktop-linux --flake "$nixos_config_dir"
+          else
+            printf '%s\n' "Skipping Codex Desktop Linux update: $nixos_config_dir/flake.nix not found" >&2
+          fi
 
           printf '\n%s\n' "Installed versions:"
           if command -v claude >/dev/null 2>&1; then
@@ -256,6 +291,30 @@ in
     matches = { };
   };
 
+  systemd.user = {
+    services.ai-tools-update = {
+      Unit = {
+        Description = "Update AI development tools";
+        After = [ "network-online.target" ];
+      };
+      Service = {
+        Type = "oneshot";
+        ExecStart = "%h/.local/bin/ai-tools-update";
+      };
+    };
+
+    timers.ai-tools-update = {
+      Unit.Description = "Update AI development tools daily";
+      Timer = {
+        OnCalendar = "daily";
+        Persistent = true;
+        RandomizedDelaySec = "1h";
+        Unit = "ai-tools-update.service";
+      };
+      Install.WantedBy = [ "timers.target" ];
+    };
+  };
+
   xdg.configFile = {
     "espanso/config/default.yml".source = ./espanso/config/default.yml;
     "espanso/match/all-emoji.yml".source = ./espanso/match/all-emoji.yml;
@@ -291,6 +350,15 @@ in
       };
     };
     home-manager.enable = true;
+    codexDesktopLinux = {
+      enable = true;
+      computerUseUi.enable = true;
+      remoteMobileControl.enable = true;
+      remoteControl.enable = true;
+
+      cliPackage = codexCli;
+      remoteControl.package = codexCli;
+    };
 
     neovim = {
       enable = true;

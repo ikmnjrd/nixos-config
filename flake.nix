@@ -12,9 +12,10 @@
       url = "github:nix-community/stylix/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    codex-desktop-linux.url = "github:ilysenko/codex-desktop-linux";
   };
 
-  outputs = { nixpkgs, nix-flatpak, home-manager, stylix, ... }:
+  outputs = inputs@{ nixpkgs, nix-flatpak, home-manager, stylix, ... }:
     let
       system = "x86_64-linux";
 
@@ -40,7 +41,7 @@
               useGlobalPkgs = true;
               useUserPackages = true;
               backupFileExtension = "hm-backup";
-              users.ikd = import ./home/ikd.nix;
+              users.ikd = import ./home/ikd.nix { inherit inputs; };
             };
           }
         ];
@@ -60,7 +61,7 @@
                 useGlobalPkgs = true;
                 useUserPackages = true;
                 backupFileExtension = "hm-backup";
-                users.ike = import ./home/ike.nix;
+                users.ike = import ./home/ike.nix { inherit inputs; };
               };
             }
           ];

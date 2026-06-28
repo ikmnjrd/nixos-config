@@ -107,7 +107,11 @@ op vault list
 
 Claude Code と Codex CLI は、Nixpkgs や Flake の更新待ちを避けるため、
 ツール本体を宣言的管理から外しています。NixOS 側では更新に必要な `curl` と
-ユーザー用の更新コマンドだけを管理します。
+ユーザー用の更新コマンドだけを管理します。Codex Desktop for Linux は
+Home Manager で導入し、Computer Use UI、mobile remote-control、
+remote-control app-server を有効化します。Codex CLI の本体は公式インストーラの
+standalone 配置 (`~/.codex/packages/standalone/current/bin/codex`) を使い、
+ラッパー経由でターミナルと Desktop の双方から参照します。
 
 初回インストールと更新は、各ユーザーで次を実行します。
 
@@ -116,8 +120,19 @@ ai-tools-update
 ```
 
 このコマンドは公式インストーラを使い、Claude Code は `latest` チャンネル、
-Codex は公式 Codex インストーラの最新版へ更新します。インストール先は
-`~/.local/bin` です。Codex App の Linux 向け非公式配布は現時点では使いません。
+Codex CLI は公式 Codex インストーラの最新版へ更新します。Claude Code の
+インストール先は `~/.local/bin`、Codex CLI は standalone 配置
+(`~/.codex/packages/standalone/`) です。Codex のインストーラは非対話モードで実行するため、
+更新後に Codex を起動するかは尋ねません。さらに、`~/workspace/nixos-config`
+が存在する場合は `codex-desktop-linux` の flake input も更新します。
+
+構成の反映後は、Home Manager の user timer が毎日バックグラウンドで
+`ai-tools-update` を実行します。手動で状態を確認するには次を実行します。
+
+```sh
+systemctl --user list-timers ai-tools-update.timer
+systemctl --user status ai-tools-update.service
+```
 
 NixOS の構成を反映した直後は、古い Nix 管理版の `claude` や `codex` が
 残っていないか確認します。
