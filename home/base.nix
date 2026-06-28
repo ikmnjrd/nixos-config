@@ -228,6 +228,10 @@
     foot = {
       enable = true;
       settings = {
+        "colors-dark" = {
+          # tmuxのwindow-active-styleなど、通常背景以外のセル背景にもfootの透過を効かせる。
+          "alpha-mode" = "all";
+        };
         main = {
           term = "xterm-256color";
           font = "SauceCodePro Nerd Font:size=12";
@@ -274,7 +278,10 @@
         set -g terminal-overrides 'xterm*:smcup@:rmcup@'
         set -ag terminal-overrides ",$TERM:Tc"
         set -g bell-action any
-        set -g window-active-style 'bg=#343d4d'
+        # nvimなどの透過背景を潰さないよう、ペイン全面はfootの背景を継承する。
+        set -g window-active-style 'bg=default'
+        # active windowの装飾はステータスライン側だけに限定する。
+        set -g window-status-current-style 'bg=#353e4e,fg=#eceff4,bold'
         # prefixとして特別扱いされるキーではコマンドを実行できないため、Home Managerが設定した
         # prefixを無効化し、root tableのバインドでIMEを英数へ戻してからprefix tableへ移る。
         # Fcitxが日本語入力の状態だと、Ctrl-fがtmux標準のprefixであるC-bとして届くことがあるため、
