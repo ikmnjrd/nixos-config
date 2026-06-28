@@ -32,7 +32,7 @@
       };
     };
 
-    opacity.terminal = 0.70;
+    opacity.terminal = 0.80;
 
     targets.qt.platform = lib.mkForce "qtct";
   };
