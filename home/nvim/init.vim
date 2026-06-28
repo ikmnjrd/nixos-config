@@ -220,6 +220,35 @@ if !exists('g:vscode')
   vim.api.nvim_set_hl(0, 'CursorInsert', { fg = '#2e3440', bg = '#ebcb8b' })
   vim.api.nvim_set_hl(0, 'Whitespace', { fg = '#5e81ac' })
   vim.api.nvim_set_hl(0, 'SpecialKey', { fg = '#5e81ac' })
+
+  local function set_tmux_window_active_style(style)
+    if not vim.env.TMUX_PANE then
+      return
+    end
+
+    vim.fn.jobstart({
+      'tmux',
+      'set-option',
+      '-w',
+      '-t',
+      vim.env.TMUX_PANE,
+      'window-active-style',
+      style,
+    }, { detach = true })
+  end
+
+  -- tmuxのactive pane背景にnvimの透過背景を潰させない。
+  set_tmux_window_active_style('bg=default')
+  vim.api.nvim_create_autocmd({ 'VimLeavePre', 'VimSuspend' }, {
+    callback = function()
+      set_tmux_window_active_style('bg=#353e4e')
+    end,
+  })
+  vim.api.nvim_create_autocmd('VimResume', {
+    callback = function()
+      set_tmux_window_active_style('bg=default')
+    end,
+  })
 EOF
 endif
 

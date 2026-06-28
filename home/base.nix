@@ -296,8 +296,8 @@
         set -g terminal-overrides 'xterm*:smcup@:rmcup@'
         set -ag terminal-overrides ",$TERM:Tc"
         set -g bell-action any
-        # nvimなどの透過背景を潰さないよう、ペイン全面はfootの背景を継承する。
-        set -g window-active-style 'bg=default'
+        # nvim側で一時的にdefaultへ逃がし、それ以外ではactive paneを濃く装飾する。
+        set -g window-active-style 'bg=#353e4e'
         # active windowの装飾はステータスライン側だけに限定する。
         set -g window-status-current-style 'bg=#353e4e,fg=#eceff4,bold'
         # prefixとして特別扱いされるキーではコマンドを実行できないため、Home Managerが設定した
