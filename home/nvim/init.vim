@@ -106,9 +106,9 @@ if !exists('g:vscode')
           git = {
             unstaged = 'M',
             staged = 'S',
-            unmerged = 'U',
+            unmerged = 'X',
             renamed = 'R',
-            untracked = '?',
+            untracked = 'U',
             deleted = 'D',
             ignored = '◌',
           },
@@ -130,6 +130,215 @@ if !exists('g:vscode')
   })
   vim.keymap.set('n', '<Leader>E', '<Cmd>NvimTreeFindFile<CR>', {
     desc = 'Reveal current file in explorer',
+    silent = true,
+  })
+
+  local telescope = require('telescope')
+  local telescope_builtin = require('telescope.builtin')
+  local telescope_make_entry = require('telescope.make_entry')
+  local telescope_themes = require('telescope.themes')
+
+  telescope.setup({
+    defaults = {
+      layout_config = {
+        horizontal = {
+          preview_cutoff = 80,
+        },
+      },
+    },
+    pickers = {
+      find_files = {
+        hidden = true,
+        no_ignore = false,
+      },
+    },
+  })
+
+  local function floating_picker_options()
+    return telescope_themes.get_dropdown({
+      border = true,
+      previewer = true,
+      width = 0.95,
+      height = 0.85,
+    })
+  end
+
+  local function git_status_label(index_status, worktree_status)
+    local conflict_statuses = {
+      DD = true,
+      AU = true,
+      UD = true,
+      UA = true,
+      DU = true,
+      AA = true,
+      UU = true,
+    }
+    if conflict_statuses[index_status .. worktree_status] then
+      return 'X'
+    end
+    if index_status == '?' or worktree_status == '?' then
+      return 'U'
+    end
+    if index_status == 'R' or worktree_status == 'R' then
+      return 'R'
+    end
+    if index_status == 'D' or worktree_status == 'D' then
+      return 'D'
+    end
+
+    local labels = {}
+    if index_status ~= ' ' then
+      table.insert(labels, 'S')
+    end
+    if worktree_status ~= ' ' then
+      table.insert(labels, 'M')
+    end
+    return table.concat(labels, '')
+  end
+
+  local git_status_highlight_groups = {
+    M = 'TelescopeGitModified',
+    S = 'TelescopeGitStaged',
+    D = 'TelescopeGitDeleted',
+    R = 'TelescopeGitRenamed',
+    U = 'TelescopeGitUntracked',
+    X = 'TelescopeGitConflict',
+  }
+
+  local function git_status_by_path()
+    if vim.fn.executable('git') ~= 1 then
+      return {}
+    end
+
+    local cwd = vim.uv.cwd()
+    local root_result = vim.system({ 'git', '-C', cwd, 'rev-parse', '--show-toplevel' }, {
+      text = true,
+    }):wait()
+    if root_result.code ~= 0 then
+      return {}
+    end
+
+    local root = vim.trim(root_result.stdout)
+    local status_result = vim.system({ 'git', '-C', root, 'status', '--porcelain=v1', '-z' }, {
+      text = true,
+    }):wait()
+    if status_result.code ~= 0 then
+      return {}
+    end
+
+    local status_by_path = {}
+    local entries = vim.split(status_result.stdout, '\0', {
+      plain = true,
+      trimempty = true,
+    })
+    local index = 1
+    while index <= #entries do
+      local entry = entries[index]
+      if #entry >= 4 then
+        local index_status = entry:sub(1, 1)
+        local worktree_status = entry:sub(2, 2)
+        local path = entry:sub(4)
+        local label = git_status_label(index_status, worktree_status)
+
+        if label ~= '' then
+          local absolute_path = root .. '/' .. path
+          local relative_path = vim.fn.fnamemodify(absolute_path, ':.')
+          status_by_path[relative_path] = label
+        end
+
+        if index_status == 'R' or index_status == 'C' then
+          index = index + 1
+        end
+      end
+      index = index + 1
+    end
+
+    return status_by_path
+  end
+
+  local function display_with_git_status(display, highlights, status)
+    if not status then
+      return display, highlights
+    end
+
+    local icon_end = display:find(' ', 1, true) or 0
+    local inserted = status .. ' '
+    local inserted_width = #inserted
+    highlights = highlights or {}
+    for _, highlight in ipairs(highlights) do
+      local range = highlight[1]
+      if range[1] >= icon_end then
+        range[1] = range[1] + inserted_width
+        range[2] = range[2] + inserted_width
+      end
+    end
+
+    for index = 1, #status do
+      local status_start = icon_end + index - 1
+      local status_char = status:sub(index, index)
+      table.insert(highlights, {
+        { status_start, status_start + 1 },
+        git_status_highlight_groups[status_char] or 'TelescopeResultsComment',
+      })
+    end
+
+    return display:sub(1, icon_end) .. inserted .. display:sub(icon_end + 1), highlights
+  end
+
+  local function git_status_entry_maker(opts)
+    local base_entry_maker = telescope_make_entry.gen_from_file(opts)
+    local status_by_path = git_status_by_path()
+
+    return function(line)
+      local entry = base_entry_maker(line)
+      if not entry then
+        return nil
+      end
+
+      local base_display = entry.display
+      entry.display = function(display_entry)
+        local display, highlights = base_display(display_entry)
+        return display_with_git_status(display, highlights, status_by_path[display_entry.value])
+      end
+
+      return entry
+    end
+  end
+
+  local function git_status_vimgrep_entry_maker(opts)
+    local base_entry_maker = telescope_make_entry.gen_from_vimgrep(opts)
+    local status_by_path = git_status_by_path()
+
+    return function(line)
+      local entry = base_entry_maker(line)
+      if not entry then
+        return nil
+      end
+
+      local base_display = entry.display
+      entry.display = function(display_entry)
+        local display, highlights = base_display(display_entry)
+        return display_with_git_status(display, highlights, status_by_path[display_entry.filename])
+      end
+
+      return entry
+    end
+  end
+
+  vim.keymap.set('n', '<C-p>', function()
+    local opts = floating_picker_options()
+    opts.entry_maker = git_status_entry_maker(opts)
+    telescope_builtin.find_files(opts)
+  end, {
+    desc = 'Find files',
+    silent = true,
+  })
+  vim.keymap.set('n', '<C-_>', function()
+    local opts = floating_picker_options()
+    opts.entry_maker = git_status_vimgrep_entry_maker(opts)
+    telescope_builtin.live_grep(opts)
+  end, {
+    desc = 'Search workspace',
     silent = true,
   })
 
@@ -224,6 +433,12 @@ if !exists('g:vscode')
       whitespace = '#56635f',
       special_key = '#7a8478',
       comment = '#859289',
+      git_modified = '#dbbc7f',
+      git_staged = '#a7c080',
+      git_deleted = '#e67e80',
+      git_renamed = '#7fbbb3',
+      git_untracked = '#83c092',
+      git_conflict = '#d699b6',
     },
     gruvbox = {
       cursor_line = '#3c3836',
@@ -235,6 +450,12 @@ if !exists('g:vscode')
       whitespace = '#665c54',
       special_key = '#928374',
       comment = '#a89984',
+      git_modified = '#fabd2f',
+      git_staged = '#b8bb26',
+      git_deleted = '#fb4934',
+      git_renamed = '#83a598',
+      git_untracked = '#8ec07c',
+      git_conflict = '#d3869b',
     },
     ['catppuccin-mocha'] = {
       cursor_line = '#313244',
@@ -246,6 +467,12 @@ if !exists('g:vscode')
       whitespace = '#585b70',
       special_key = '#6c7086',
       comment = '#9399b2',
+      git_modified = '#f9e2af',
+      git_staged = '#a6e3a1',
+      git_deleted = '#f38ba8',
+      git_renamed = '#89b4fa',
+      git_untracked = '#94e2d5',
+      git_conflict = '#cba6f7',
     },
     solarized = {
       cursor_line = '#073642',
@@ -257,6 +484,12 @@ if !exists('g:vscode')
       whitespace = '#586e75',
       special_key = '#657b83',
       comment = '#657b83',
+      git_modified = '#b58900',
+      git_staged = '#859900',
+      git_deleted = '#dc322f',
+      git_renamed = '#268bd2',
+      git_untracked = '#2aa198',
+      git_conflict = '#6c71c4',
     },
   }
   local highlights = theme_highlights[colorscheme] or theme_highlights.everforest
@@ -269,6 +502,12 @@ if !exists('g:vscode')
   vim.api.nvim_set_hl(0, 'SpecialKey', { fg = highlights.special_key })
   vim.api.nvim_set_hl(0, 'Comment', { fg = highlights.comment })
   vim.api.nvim_set_hl(0, '@comment', { fg = highlights.comment })
+  vim.api.nvim_set_hl(0, 'TelescopeGitModified', { fg = highlights.git_modified, bold = true })
+  vim.api.nvim_set_hl(0, 'TelescopeGitStaged', { fg = highlights.git_staged, bold = true })
+  vim.api.nvim_set_hl(0, 'TelescopeGitDeleted', { fg = highlights.git_deleted, bold = true })
+  vim.api.nvim_set_hl(0, 'TelescopeGitRenamed', { fg = highlights.git_renamed, bold = true })
+  vim.api.nvim_set_hl(0, 'TelescopeGitUntracked', { fg = highlights.git_untracked, bold = true })
+  vim.api.nvim_set_hl(0, 'TelescopeGitConflict', { fg = highlights.git_conflict, bold = true })
 
   local function set_tmux_window_active_style(style)
     if not vim.env.TMUX_PANE then

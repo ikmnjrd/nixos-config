@@ -401,6 +401,8 @@ in
         vim-gina
         nvim-tree-lua
         nvim-web-devicons
+        plenary-nvim
+        telescope-nvim
         toggleterm-nvim
         (nvim-treesitter.withPlugins (parsers: with parsers; [
           prisma
