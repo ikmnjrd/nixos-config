@@ -114,12 +114,13 @@ in
             2) theme="gruvbox" ;;
             3) theme="catppuccin" ;;
             4) theme="solarized" ;;
-            *) theme="nord" ;;
+            *) theme="everforest" ;;
           esac
 
           case "$2" in
             bat)
               case "$theme" in
+                everforest) echo "ansi" ;;
                 gruvbox) echo "gruvbox-dark" ;;
                 catppuccin) echo "Catppuccin Mocha" ;;
                 solarized) echo "Solarized (dark)" ;;
@@ -216,6 +217,11 @@ in
               background="#002b36"
               foreground="#839496"
               palette="073642 dc322f 859900 b58900 268bd2 d33682 2aa198 eee8d5 002b36 cb4b16 586e75 657b83 839496 6c71c4 93a1a1 fdf6e3"
+              ;;
+            everforest)
+              background="#2d353b"
+              foreground="#d3c6aa"
+              palette="475258 e67e80 a7c080 dbbc7f 7fbbb3 d699b6 83c092 d3c6aa 7a8478 e67e80 a7c080 dbbc7f 7fbbb3 d699b6 83c092 d3c6aa"
               ;;
             nord)
               background="#2e3440"
@@ -350,6 +356,9 @@ in
     "espanso/match/markdown.yml".source = ./espanso/match/markdown.yml;
   };
 
+  # nvimの色はwindowごとのcolorschemeで切り替えるため、Stylixの注入から外す。
+  stylix.targets.neovim.enable = false;
+
   programs = {
     bat.enable = true;
     direnv = {
@@ -399,6 +408,7 @@ in
           tsx
           typescript
         ]))
+        everforest
         catppuccin-nvim
         gruvbox-nvim
         nord-nvim
@@ -421,9 +431,9 @@ in
         set -ag terminal-overrides ",$TERM:Tc"
         set -g bell-action any
         # nvim側で一時的にdefaultへ逃がし、それ以外ではactive paneを濃く装飾する。
-        set -g window-active-style 'bg=#353e4e'
+        set -g window-active-style 'bg=#343f44'
         # active windowの装飾はステータスライン側だけに限定する。
-        set -g window-status-current-style 'bg=#353e4e,fg=#eceff4,bold'
+        set -g window-status-current-style 'bg=#343f44,fg=#d3c6aa,bold'
         # prefixとして特別扱いされるキーではコマンドを実行できないため、Home Managerが設定した
         # prefixを無効化し、root tableのバインドでIMEを英数へ戻してからprefix tableへ移る。
         # Fcitxが日本語入力の状態だと、Ctrl-fがtmux標準のprefixであるC-bとして届くことがあるため、

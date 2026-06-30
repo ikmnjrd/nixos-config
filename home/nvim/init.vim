@@ -191,7 +191,7 @@ if !exists('g:vscode')
     and vim.fn.system({ 'tmux', 'display-message', '-p', '-t', vim.env.TMUX_PANE, '#{window_index}' }):gsub('%s+$', '')
     or ''
 
-  local colorscheme = 'nord'
+  local colorscheme = 'everforest'
   if window_index == '2' then
     colorscheme = 'gruvbox'
     require('gruvbox').setup({ transparent_mode = true })
@@ -202,24 +202,73 @@ if !exists('g:vscode')
     colorscheme = 'solarized'
     vim.g.solarized_disable_background = true
   else
-    vim.g.nord_contrast = true
-    vim.g.nord_borders = false
-    vim.g.nord_disable_background = true
-    vim.g.nord_italic = false
-    vim.g.nord_uniform_diff_background = true
+    vim.g.everforest_background = 'medium'
+    vim.g.everforest_transparent_background = 1
+    vim.g.everforest_enable_italic = 0
   end
 
   vim.cmd.colorscheme(colorscheme)
   for _, group in ipairs({ 'Normal', 'NormalNC', 'NormalFloat', 'SignColumn', 'EndOfBuffer' }) do
     vim.api.nvim_set_hl(0, group, { bg = 'NONE' })
   end
-  vim.api.nvim_set_hl(0, 'CursorLine', { bg = '#3b4252' })
-  vim.api.nvim_set_hl(0, 'CursorColumn', { bg = '#434c5e' })
-  vim.api.nvim_set_hl(0, 'CursorLineNr', { fg = '#88c0d0', bold = true })
-  vim.api.nvim_set_hl(0, 'Cursor', { fg = '#2e3440', bg = '#eceff4' })
-  vim.api.nvim_set_hl(0, 'CursorInsert', { fg = '#2e3440', bg = '#ebcb8b' })
-  vim.api.nvim_set_hl(0, 'Whitespace', { fg = '#5e81ac' })
-  vim.api.nvim_set_hl(0, 'SpecialKey', { fg = '#5e81ac' })
+
+  -- windowごとのテーマに合わせて、共通で上書きするUI色も切り替える。
+  local theme_highlights = {
+    everforest = {
+      cursor_line = '#343f44',
+      cursor_column = '#3d484d',
+      cursor_line_nr = '#a7c080',
+      cursor_fg = '#2d353b',
+      cursor_bg = '#d3c6aa',
+      cursor_insert = '#dbbc7f',
+      whitespace = '#56635f',
+      special_key = '#7a8478',
+      comment = '#859289',
+    },
+    gruvbox = {
+      cursor_line = '#3c3836',
+      cursor_column = '#504945',
+      cursor_line_nr = '#fabd2f',
+      cursor_fg = '#282828',
+      cursor_bg = '#ebdbb2',
+      cursor_insert = '#fabd2f',
+      whitespace = '#665c54',
+      special_key = '#928374',
+      comment = '#a89984',
+    },
+    ['catppuccin-mocha'] = {
+      cursor_line = '#313244',
+      cursor_column = '#45475a',
+      cursor_line_nr = '#89b4fa',
+      cursor_fg = '#1e1e2e',
+      cursor_bg = '#cdd6f4',
+      cursor_insert = '#f9e2af',
+      whitespace = '#585b70',
+      special_key = '#6c7086',
+      comment = '#9399b2',
+    },
+    solarized = {
+      cursor_line = '#073642',
+      cursor_column = '#073642',
+      cursor_line_nr = '#2aa198',
+      cursor_fg = '#002b36',
+      cursor_bg = '#eee8d5',
+      cursor_insert = '#b58900',
+      whitespace = '#586e75',
+      special_key = '#657b83',
+      comment = '#657b83',
+    },
+  }
+  local highlights = theme_highlights[colorscheme] or theme_highlights.everforest
+  vim.api.nvim_set_hl(0, 'CursorLine', { bg = highlights.cursor_line })
+  vim.api.nvim_set_hl(0, 'CursorColumn', { bg = highlights.cursor_column })
+  vim.api.nvim_set_hl(0, 'CursorLineNr', { fg = highlights.cursor_line_nr, bold = true })
+  vim.api.nvim_set_hl(0, 'Cursor', { fg = highlights.cursor_fg, bg = highlights.cursor_bg })
+  vim.api.nvim_set_hl(0, 'CursorInsert', { fg = highlights.cursor_fg, bg = highlights.cursor_insert })
+  vim.api.nvim_set_hl(0, 'Whitespace', { fg = highlights.whitespace })
+  vim.api.nvim_set_hl(0, 'SpecialKey', { fg = highlights.special_key })
+  vim.api.nvim_set_hl(0, 'Comment', { fg = highlights.comment })
+  vim.api.nvim_set_hl(0, '@comment', { fg = highlights.comment })
 
   local function set_tmux_window_active_style(style)
     if not vim.env.TMUX_PANE then
@@ -241,7 +290,7 @@ if !exists('g:vscode')
   set_tmux_window_active_style('bg=default')
   vim.api.nvim_create_autocmd({ 'VimLeavePre', 'VimSuspend' }, {
     callback = function()
-      set_tmux_window_active_style('bg=#353e4e')
+      set_tmux_window_active_style('bg=#343f44')
     end,
   })
   vim.api.nvim_create_autocmd('VimResume', {
