@@ -74,6 +74,7 @@ if !exists('g:vscode')
     },
     filters = {
       dotfiles = false,
+      git_ignored = false,
     },
     git = {
       enable = true,
@@ -131,6 +132,129 @@ if !exists('g:vscode')
   vim.keymap.set('n', '<Leader>E', '<Cmd>NvimTreeFindFile<CR>', {
     desc = 'Reveal current file in explorer',
     silent = true,
+  })
+
+  local function normalize_path(path)
+    return vim.fn.fnamemodify(path, ':p'):gsub('/+$', '')
+  end
+
+  local function is_under_home(path)
+    local home = normalize_path(vim.fn.expand('~'))
+    local absolute_path = normalize_path(path)
+    return absolute_path == home or vim.startswith(absolute_path, home .. '/')
+  end
+
+  local function dirname(path)
+    local parent = vim.fn.fnamemodify(path, ':h')
+    if parent == path then
+      return nil
+    end
+    return parent
+  end
+
+  local function startup_search_dir(path)
+    local absolute_path = vim.fn.fnamemodify(path, ':p')
+    local stat = vim.uv.fs_stat(absolute_path)
+    if stat and stat.type == 'directory' then
+      return normalize_path(absolute_path)
+    end
+    return normalize_path(vim.fn.fnamemodify(absolute_path, ':h'))
+  end
+
+  local function git_root_for_path(path)
+    local dir = startup_search_dir(path)
+    while dir and is_under_home(dir) do
+      if vim.uv.fs_stat(dir .. '/.git') then
+        return dir
+      end
+      dir = dirname(dir)
+    end
+    return nil
+  end
+
+  local function is_git_editor_file(path)
+    local absolute_path = normalize_path(path)
+    if not absolute_path:find('/%.git/', 1) then
+      return false
+    end
+
+    local basename = vim.fn.fnamemodify(absolute_path, ':t')
+    local git_editor_files = {
+      COMMIT_EDITMSG = true,
+      MERGE_MSG = true,
+      TAG_EDITMSG = true,
+      NOTES_EDITMSG = true,
+      REBASE_EDITMSG = true,
+      ['git-rebase-todo'] = true,
+    }
+    return git_editor_files[basename] == true
+  end
+
+  local function startup_arg_paths()
+    local paths = {}
+    for index = 0, vim.fn.argc() - 1 do
+      local path = vim.fn.argv(index)
+      if type(path) == 'string' and path ~= '' and not path:match('^[%w+.-]+://') then
+        table.insert(paths, vim.fn.fnamemodify(path, ':p'))
+      end
+    end
+    if #paths == 0 then
+      local cwd = vim.uv.cwd()
+      if cwd then
+        table.insert(paths, cwd)
+      end
+    end
+    return paths
+  end
+
+  vim.api.nvim_create_autocmd('VimEnter', {
+    group = vim.api.nvim_create_augroup('nvim_tree_git_workspace', {
+      clear = true,
+    }),
+    callback = function()
+      local paths = startup_arg_paths()
+      if #paths == 0 then
+        return
+      end
+
+      for _, path in ipairs(paths) do
+        if is_git_editor_file(path) then
+          return
+        end
+      end
+
+      local target_path = paths[1]
+      if not is_under_home(target_path) then
+        return
+      end
+
+      local root = git_root_for_path(target_path)
+      if not root then
+        return
+      end
+
+      vim.schedule(function()
+        local nvim_tree_api = require('nvim-tree.api')
+        local target_win = vim.api.nvim_get_current_win()
+        local target_stat = vim.uv.fs_stat(target_path)
+
+        -- 起動時の対象からGitルートを探し、そのワークスペース全体をツリーに表示する。
+        nvim_tree_api.tree.open({
+          path = root,
+        })
+        nvim_tree_api.tree.change_root(root)
+
+        if target_stat and target_stat.type == 'file' then
+          nvim_tree_api.tree.find_file({
+            buf = target_path,
+          })
+        end
+
+        if target_stat and target_stat.type == 'file' and vim.api.nvim_win_is_valid(target_win) then
+          vim.api.nvim_set_current_win(target_win)
+        end
+      end)
+    end,
   })
 
   local telescope = require('telescope')
