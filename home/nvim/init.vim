@@ -57,6 +57,12 @@ if !exists('g:vscode')
     endif
   endfunction
 
+  nmap gd <Plug>(coc-definition)
+  nmap gD <Plug>(coc-declaration)
+  nmap gi <Plug>(coc-implementation)
+  nmap gy <Plug>(coc-type-definition)
+  nnoremap <silent> K :call <SID>show_documentation()<CR>
+
   lua << EOF
   vim.g.loaded_netrw = 1
   vim.g.loaded_netrwPlugin = 1
@@ -261,6 +267,7 @@ if !exists('g:vscode')
   local telescope_builtin = require('telescope.builtin')
   local telescope_make_entry = require('telescope.make_entry')
   local telescope_themes = require('telescope.themes')
+  local web_devicons = require('nvim-web-devicons')
 
   telescope.setup({
     defaults = {
@@ -367,7 +374,9 @@ if !exists('g:vscode')
         if label ~= '' then
           local absolute_path = root .. '/' .. path
           local relative_path = vim.fn.fnamemodify(absolute_path, ':.')
+          status_by_path[path] = label
           status_by_path[relative_path] = label
+          status_by_path[absolute_path] = label
         end
 
         if index_status == 'R' or index_status == 'C' then
@@ -378,6 +387,52 @@ if !exists('g:vscode')
     end
 
     return status_by_path
+  end
+
+  local function git_status_for_path(status_by_path, path)
+    if not path then
+      return nil
+    end
+
+    return status_by_path[path]
+      or status_by_path[vim.fn.fnamemodify(path, ':.')]
+      or status_by_path[vim.fn.fnamemodify(path, ':p')]
+  end
+
+  local function shifted_highlights(highlights, offset)
+    local shifted = {}
+    for _, highlight in ipairs(highlights or {}) do
+      local range = highlight[1]
+      table.insert(shifted, {
+        { range[1] + offset, range[2] + offset },
+        highlight[2],
+      })
+    end
+    return shifted
+  end
+
+  local function display_with_file_icon(filename, display, highlights)
+    if not filename or filename == '' then
+      return display, highlights
+    end
+
+    local basename = vim.fn.fnamemodify(filename, ':t')
+    local extension = vim.fn.fnamemodify(filename, ':e')
+    local icon, icon_highlight = web_devicons.get_icon(basename, extension, {
+      default = true,
+    })
+    icon = icon or ' '
+
+    local prefix = icon .. ' '
+    highlights = shifted_highlights(highlights, #prefix)
+    if icon_highlight then
+      table.insert(highlights, 1, {
+        { 0, #icon },
+        icon_highlight,
+      })
+    end
+
+    return prefix .. display, highlights
   end
 
   local function display_with_git_status(display, highlights, status)
@@ -422,7 +477,7 @@ if !exists('g:vscode')
       local base_display = entry.display
       entry.display = function(display_entry)
         local display, highlights = base_display(display_entry)
-        return display_with_git_status(display, highlights, status_by_path[display_entry.value])
+        return display_with_git_status(display, highlights, git_status_for_path(status_by_path, display_entry.value))
       end
 
       return entry
@@ -442,11 +497,103 @@ if !exists('g:vscode')
       local base_display = entry.display
       entry.display = function(display_entry)
         local display, highlights = base_display(display_entry)
-        return display_with_git_status(display, highlights, status_by_path[display_entry.filename])
+        return display_with_git_status(display, highlights, git_status_for_path(status_by_path, display_entry.filename))
       end
 
       return entry
     end
+  end
+
+  local function git_status_quickfix_entry_maker(opts)
+    local base_entry_maker = telescope_make_entry.gen_from_quickfix(opts)
+    local status_by_path = git_status_by_path()
+
+    return function(item)
+      local entry = base_entry_maker(item)
+      if not entry then
+        return nil
+      end
+
+      local base_display = entry.display
+      entry.display = function(display_entry)
+        local display, highlights = base_display(display_entry)
+        display, highlights = display_with_file_icon(display_entry.filename, display, highlights)
+        return display_with_git_status(display, highlights, git_status_for_path(status_by_path, display_entry.filename))
+      end
+
+      return entry
+    end
+  end
+
+  local function qf_item_from_coc_location(location)
+    local uri = location.uri or location.targetUri
+    local range = location.range or location.targetSelectionRange or location.targetRange
+    if not uri or not range or not range.start then
+      return nil
+    end
+
+    local filename_ok, filename = pcall(vim.uri_to_fname, uri)
+    if not filename_ok then
+      return nil
+    end
+
+    local lnum = range.start.line + 1
+    local col = range.start.character + 1
+    local text = ''
+    local bufnr = vim.fn.bufadd(filename)
+    if bufnr > 0 then
+      pcall(vim.fn.bufload, bufnr)
+      local lines_ok, lines = pcall(vim.api.nvim_buf_get_lines, bufnr, lnum - 1, lnum, false)
+      if lines_ok and lines[1] then
+        text = vim.trim(lines[1])
+      end
+    end
+
+    return {
+      filename = filename,
+      lnum = lnum,
+      col = col,
+      text = text,
+    }
+  end
+
+  local function show_coc_references_with_telescope()
+    if vim.fn['coc#rpc#ready']() ~= 1 then
+      vim.notify('coc.nvim is not ready', vim.log.levels.WARN)
+      return
+    end
+
+    local locations_ok, locations = pcall(vim.fn.CocAction, 'references')
+    if not locations_ok then
+      vim.notify(locations, vim.log.levels.ERROR)
+      return
+    end
+    if type(locations) ~= 'table' or vim.tbl_isempty(locations) then
+      vim.notify('No references found', vim.log.levels.INFO)
+      return
+    end
+
+    local items = {}
+    for _, location in ipairs(locations) do
+      local item = qf_item_from_coc_location(location)
+      if item then
+        table.insert(items, item)
+      end
+    end
+    if #items == 0 then
+      vim.notify('No references found', vim.log.levels.INFO)
+      return
+    end
+
+    vim.fn.setqflist({}, ' ', {
+      title = 'Coc references',
+      items = items,
+    })
+
+    local opts = floating_picker_options()
+    opts.entry_maker = git_status_quickfix_entry_maker(opts)
+    opts.prompt_title = 'Coc references'
+    telescope_builtin.quickfix(opts)
   end
 
   vim.keymap.set('n', '<C-p>', function()
@@ -463,6 +610,12 @@ if !exists('g:vscode')
     telescope_builtin.live_grep(opts)
   end, {
     desc = 'Search workspace',
+    silent = true,
+  })
+
+  vim.keymap.set('n', 'gr', show_coc_references_with_telescope, {
+    desc = 'Find references',
+    nowait = true,
     silent = true,
   })
 
