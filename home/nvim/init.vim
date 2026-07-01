@@ -140,6 +140,66 @@ if !exists('g:vscode')
     silent = true,
   })
 
+  local mini_map = require('mini.map')
+  mini_map.setup({
+    integrations = {
+      mini_map.gen_integration.builtin_search(),
+      mini_map.gen_integration.diagnostic(),
+    },
+    window = {
+      side = 'right',
+      width = 10,
+      winblend = 20,
+    },
+  })
+
+  vim.keymap.set('n', '<Leader>m', MiniMap.toggle, {
+    desc = 'Toggle minimap',
+    silent = true,
+  })
+
+  local function is_file_buffer(bufnr)
+    return vim.api.nvim_buf_is_valid(bufnr)
+      and vim.api.nvim_buf_is_loaded(bufnr)
+      and vim.bo[bufnr].buftype == ''
+      and vim.api.nvim_buf_get_name(bufnr) ~= ''
+  end
+
+  local function has_file_window()
+    for _, winid in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+      if vim.api.nvim_win_get_config(winid).relative == '' and is_file_buffer(vim.api.nvim_win_get_buf(winid)) then
+        return true
+      end
+    end
+    return false
+  end
+
+  local function sync_minimap()
+    if is_file_buffer(vim.api.nvim_get_current_buf()) then
+      MiniMap.open()
+    elseif not has_file_window() then
+      MiniMap.close()
+    end
+  end
+
+  vim.api.nvim_create_autocmd({ 'BufEnter', 'BufWinEnter', 'WinEnter' }, {
+    group = vim.api.nvim_create_augroup('file_minimap', {
+      clear = true,
+    }),
+    callback = function()
+      vim.schedule(sync_minimap)
+    end,
+  })
+
+  vim.api.nvim_create_autocmd({ 'BufDelete', 'BufWipeout', 'BufWinLeave', 'WinClosed' }, {
+    group = vim.api.nvim_create_augroup('file_minimap_close', {
+      clear = true,
+    }),
+    callback = function()
+      vim.schedule(sync_minimap)
+    end,
+  })
+
   local function normalize_path(path)
     return vim.fn.fnamemodify(path, ':p'):gsub('/+$', '')
   end
@@ -256,7 +316,7 @@ if !exists('g:vscode')
           })
         end
 
-        if target_stat and target_stat.type == 'file' and vim.api.nvim_win_is_valid(target_win) then
+        if vim.api.nvim_win_is_valid(target_win) then
           vim.api.nvim_set_current_win(target_win)
         end
       end)

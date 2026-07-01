@@ -399,6 +399,7 @@ in
       plugins = with pkgs.vimPlugins; [
         coc-nvim
         vim-gina
+        mini-nvim
         nvim-tree-lua
         nvim-web-devicons
         plenary-nvim
