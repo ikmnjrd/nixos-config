@@ -726,7 +726,7 @@ if !exists('g:vscode')
     end,
   })
 
-  vim.keymap.set('n', '<Leader>gg', function()
+  vim.keymap.set('n', '<C-g>', function()
     lazygit:toggle()
   end, {
     desc = 'Open lazygit',
