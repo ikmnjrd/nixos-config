@@ -2,7 +2,7 @@
   username,
   homeDirectory ? "/home/${username}",
 }:
-{ lib, pkgs, ... }:
+{ lib, pkgs, config, ... }:
 
 let
   aiToolsUpdatePath = lib.makeBinPath (with pkgs; [
@@ -56,6 +56,93 @@ let
     export PATH="${espansoWlPaste}/bin:${pkgs.wl-clipboard}/bin:${pkgs.setxkbmap}/bin:${pkgs.libnotify}/bin:$PATH"
     exec -a "$0" "${pkgs.espanso-wayland}/bin/.espanso-wrapped" "$@"
   '';
+
+  textEditorMimeTypes = [
+    "text/plain"
+    "text/markdown"
+    "text/x-markdown"
+    "text/x-readme"
+    "text/x-log"
+    "text/x-c"
+    "text/x-c++"
+    "text/x-chdr"
+    "text/x-csrc"
+    "text/x-c++hdr"
+    "text/x-c++src"
+    "text/x-go"
+    "text/x-java"
+    "text/x-lua"
+    "text/x-makefile"
+    "text/x-nix"
+    "text/x-perl"
+    "text/x-python"
+    "text/x-ruby"
+    "text/x-rustsrc"
+    "text/x-sql"
+    "text/x-vim"
+    "application/javascript"
+    "application/json"
+    "application/sql"
+    "application/toml"
+    "application/x-desktop"
+    "application/x-shellscript"
+    "application/x-toml"
+    "application/x-yaml"
+    "application/xml"
+    "application/yaml"
+  ];
+
+  openInNvim = pkgs.writeShellScriptBin "open-in-nvim" ''
+    set -euo pipefail
+
+    first_path="''${1:-$HOME}"
+    if [ -d "$first_path" ]; then
+      start_dir="$first_path"
+    else
+      start_dir="$(${pkgs.coreutils}/bin/dirname -- "$first_path")"
+    fi
+
+    window_name="nvim"
+    if [ "$#" -gt 0 ]; then
+      window_name="nvim: $(${pkgs.coreutils}/bin/basename -- "$first_path")"
+    fi
+
+    select_tmux_session() {
+      ${pkgs.tmux}/bin/tmux list-clients -F '#{session_name}' 2>/dev/null |
+        ${pkgs.coreutils}/bin/head -n 1 || true
+    }
+
+    open_in_tmux() {
+      session="$(select_tmux_session)"
+      [ -n "$session" ] || return 1
+
+      if [ "$#" -gt 0 ]; then
+        command_parts=("${config.programs.neovim.finalPackage}/bin/nvim" -- "$@")
+      else
+        command_parts=("${config.programs.neovim.finalPackage}/bin/nvim")
+      fi
+
+      shell_command=""
+      for part in "''${command_parts[@]}"; do
+        printf -v quoted_part '%q' "$part"
+        shell_command="$shell_command $quoted_part"
+      done
+      shell_command="''${shell_command# }"
+
+      ${pkgs.tmux}/bin/tmux new-window \
+        -t "$session:" \
+        -c "$start_dir" \
+        -n "$window_name" \
+        "$shell_command" || return 1
+    }
+
+    # 画面上にtmuxクライアントがある場合は、そのセッションへnvim用windowを増やす。
+    if open_in_tmux "$@"; then
+      exit 0
+    fi
+
+    exec ${pkgs.foot}/bin/foot --working-directory="$start_dir" ${config.programs.neovim.finalPackage}/bin/nvim -- "$@"
+  '';
 in
 {
   home = {
@@ -93,6 +180,7 @@ in
     ]) ++ [
       # ターミナルでもcodexをstandalone本体へ橋渡しする(cliPackageと同一)。
       codexCli
+      openInNvim
     ];
 
     file = {
@@ -331,6 +419,24 @@ in
       };
       Install.WantedBy = [ "timers.target" ];
     };
+  };
+
+  xdg.desktopEntries.nvim-foot = {
+    name = "Neovim in foot";
+    genericName = "Text Editor";
+    comment = "footまたは既存のtmuxセッション越しにNeovimでファイルを開く";
+    exec = "${openInNvim}/bin/open-in-nvim %F";
+    icon = "nvim";
+    terminal = false;
+    type = "Application";
+    categories = [ "Utility" "TextEditor" ];
+    mimeType = textEditorMimeTypes;
+  };
+
+  xdg.mimeApps = {
+    enable = true;
+    associations.added = lib.genAttrs textEditorMimeTypes (_: [ "nvim-foot.desktop" ]);
+    defaultApplications = lib.genAttrs textEditorMimeTypes (_: [ "nvim-foot.desktop" ]);
   };
 
   xdg.configFile = {
