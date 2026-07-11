@@ -13,6 +13,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     codex-desktop-linux.url = "github:ilysenko/codex-desktop-linux";
+    ywhisp.url = "path:/home/ike/workspace/ywhisp";
   };
 
   outputs = inputs@{ nixpkgs, nix-flatpak, home-manager, stylix, ... }:
@@ -54,8 +55,21 @@
           modules = [
             stylix.nixosModules.stylix
             nix-flatpak.nixosModules.nix-flatpak
+            inputs.ywhisp.nixosModules.ywhisp
             home-manager.nixosModules.home-manager
             ./hosts/legoship/configuration.nix
+            {
+              services.ywhisp = {
+                enable = true;
+                openFirewall = true;
+                enableGnomeExtension = true;
+                users = [ "ike" ];
+
+                certFile = "/home/ike/.config/ywhisp/certs/lan.pem";
+                keyFile = "/home/ike/.config/ywhisp/certs/lan-key.pem";
+                whisperModel = "/home/ike/.local/share/ywhisp/models/ggml-base.bin";
+              };
+            }
             {
               home-manager = {
                 useGlobalPkgs = true;
