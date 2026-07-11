@@ -38,7 +38,7 @@ in
   users.users."ikd" = {
     isNormalUser = true;
     description = "ikd";
-    extraGroups = [ "docker" "input" "keyd" "networkmanager" "wheel" ];
+    extraGroups = [ "docker" "input" "keyd" "kvm" "networkmanager" "wheel" ];
     shell = pkgs.zsh;
   };
 

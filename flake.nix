@@ -13,6 +13,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     codex-desktop-linux.url = "github:ilysenko/codex-desktop-linux";
+    claude-desktop.url = "github:aaddrick/claude-desktop-debian";
     ywhisp.url = "path:/home/ike/workspace/ywhisp";
   };
 

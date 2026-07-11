@@ -8,6 +8,8 @@
 
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
+  # Claude Coworkの仮想マシンとの通信に使う。
+  boot.kernelModules = [ "vhost_vsock" ];
 
   networking.networkmanager.enable = true;
 

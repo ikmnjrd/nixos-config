@@ -94,7 +94,7 @@ EOF
   users.users.ike = {
     isNormalUser = true;
     description = "ike";
-    extraGroups = [ "docker" "input" "keyd" "networkmanager" "wheel" ];
+    extraGroups = [ "docker" "input" "keyd" "kvm" "networkmanager" "wheel" ];
     shell = pkgs.zsh;
   };
 }

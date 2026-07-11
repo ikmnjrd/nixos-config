@@ -64,6 +64,10 @@ let
       });
     });
 
+  # 公式Linux版を日次で追従するupstreamのFHSパッケージを使う。
+  claudeDesktopPackage =
+    inputs.claude-desktop.packages.${pkgs.stdenv.hostPlatform.system}.default;
+
   espansoWlPaste = pkgs.writeShellScriptBin "wl-paste" ''
     out_file="$(mktemp)"
     err_file="$(mktemp)"
@@ -217,6 +221,7 @@ in
       wl-clipboard
     ]) ++ [
       # ターミナルでもcodexをstandalone本体へ橋渡しする(cliPackageと同一)。
+      claudeDesktopPackage
       codexCli
       openInNvim
     ];
@@ -304,6 +309,10 @@ in
           CODEX_NON_INTERACTIVE=1 sh "$tmp_dir/codex-install.sh"
 
           if [ -f "$nixos_config_dir/flake.nix" ]; then
+            # Claude Desktopは公式APT版を追従するflake inputから導入する。
+            printf '%s\n' "Updating Claude Desktop..."
+            nix flake update claude-desktop --flake "$nixos_config_dir"
+
             # Codex Desktop Linuxはflake inputとしてHome Managerから導入する。
             printf '%s\n' "Updating Codex Desktop Linux..."
             nix flake update codex-desktop-linux --flake "$nixos_config_dir"
