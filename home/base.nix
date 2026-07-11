@@ -429,6 +429,7 @@ in
       custom-keybindings = [
         "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/fcitx-english/"
         "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/fcitx-japanese/"
+        "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/suspend/"
       ];
     };
     "org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/fcitx-english" = {
@@ -440,6 +441,11 @@ in
       binding = "XF86Launch6";
       command = "${pkgs.fcitx5}/bin/fcitx5-remote -o";
       name = "Fcitx Japanese input";
+    };
+    "org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/suspend" = {
+      binding = "<Super><Control>q";
+      command = "systemctl suspend";
+      name = "Suspend";
     };
   };
 
