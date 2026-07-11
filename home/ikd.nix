@@ -6,6 +6,7 @@
     (import ./base.nix {
       username = "ikd";
       homeDirectory = "/home/ikd";
+      inherit inputs;
     })
   ];
 }

@@ -9,6 +9,7 @@ in
     (import ./base.nix {
       username = "ike";
       inherit homeDirectory;
+      inherit inputs;
     })
     (import ./wallpaper.nix {
       inherit homeDirectory;

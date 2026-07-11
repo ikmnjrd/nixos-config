@@ -1,6 +1,7 @@
 {
   username,
   homeDirectory ? "/home/${username}",
+  inputs,
 }:
 { lib, pkgs, config, ... }:
 
@@ -25,6 +26,43 @@ let
   codexCli = pkgs.writeShellScriptBin "codex" ''
     exec "$HOME/.codex/packages/standalone/current/bin/codex" "$@"
   '';
+
+  codexDesktopLinuxPackage =
+    let
+      cfg = config.programs.codexDesktopLinux;
+      upstreamPackage = inputs.codex-desktop-linux.packages.${pkgs.stdenv.hostPlatform.system}.codex-desktop.override {
+        enableComputerUseUi = cfg.computerUseUi.enable;
+        linuxFeatureIds = cfg.linuxFeatures ++ lib.optional cfg.remoteMobileControl.enable "remote-mobile-control";
+      };
+      upstreamDmg = pkgs.fetchurl {
+        url = "https://persistent.oaistatic.com/codex-app-prod/ChatGPT.dmg";
+        hash = "sha256-b2evfi+TQJOriv687BE3TUDI24+RAPtmIPJBVUAdgxk=";
+      };
+      currentDmg = pkgs.fetchurl {
+        url = "https://persistent.oaistatic.com/codex-app-prod/ChatGPT.dmg";
+        hash = "sha256-RnolOBrylD8sm4eUra4os2QAvW2idT2vSIml/VUMTWU=";
+      };
+    in
+    upstreamPackage.overrideAttrs (old: {
+      src = old.src.overrideAttrs (payloadOld: {
+        # upstreamの固定ハッシュ更新待ちの間、payload生成で使うDMGだけ差し替える。
+        installPhase =
+          let
+            oldDmgPath = builtins.unsafeDiscardStringContext "${upstreamDmg}";
+            newDmgPath = builtins.unsafeDiscardStringContext "${currentDmg}";
+            oldContext = builtins.getContext payloadOld.installPhase;
+            oldDmgContextKeys = builtins.filter
+              (name: builtins.match ".*/[^/]*-ChatGPT[.]dmg[.]drv" name != null)
+              (builtins.attrNames oldContext);
+            retainedContext = builtins.removeAttrs oldContext oldDmgContextKeys;
+            replacedPhase = builtins.replaceStrings
+              [ oldDmgPath ]
+              [ newDmgPath ]
+              (builtins.unsafeDiscardStringContext payloadOld.installPhase);
+          in
+          builtins.appendContext replacedPhase (retainedContext // builtins.getContext "${currentDmg}");
+      });
+    });
 
   espansoWlPaste = pkgs.writeShellScriptBin "wl-paste" ''
     out_file="$(mktemp)"
@@ -493,6 +531,7 @@ in
       computerUseUi.enable = true;
       remoteMobileControl.enable = true;
       remoteControl.enable = true;
+      package = codexDesktopLinuxPackage;
 
       cliPackage = codexCli;
       remoteControl.package = codexCli;
