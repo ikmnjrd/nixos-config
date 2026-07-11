@@ -392,9 +392,15 @@ in
       num-workspaces = 6;
     };
     "org/gnome/shell/keybindings" = {
-      toggle-overview = [ "<Super>d" ];
+      toggle-overview = [
+        "<Super>d"
+        "<Control>Up"
+        "<Alt>space"
+      ];
     };
     "org/gnome/desktop/wm/keybindings" = {
+      # Alt+Spaceはoverview表示に使うため、既定のウィンドウメニューを無効化する。
+      activate-window-menu = [ ];
       switch-to-workspace-left = [ "<Control>Left" ];
       switch-to-workspace-right = [ "<Control>Right" ];
       # Super+Shift+数字でアクティブウィンドウを対応するワークスペースへ移動する。
