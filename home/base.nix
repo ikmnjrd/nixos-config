@@ -670,6 +670,71 @@ in
       autosuggestion.enable = true;
       syntaxHighlighting.enable = true;
 
+      envExtra = ''
+        mkgitrepo() {
+          emulate -L zsh
+          setopt err_return no_unset
+
+          local visibility="--public"
+          local repo_name=""
+          local -a extra_args
+
+          while (( $# > 0 )); do
+            case "$1" in
+              --public|--private|--internal)
+                visibility="$1"
+                ;;
+              -h|--help)
+                cat <<'EOF'
+Usage: mkgitrepo [--public|--private|--internal] <repo> [gh repo create flags...]
+
+Create a Git repository under ~/workspace and create its GitHub remote.
+If visibility is omitted, --public is used.
+EOF
+                return 0
+                ;;
+              --)
+                shift
+                extra_args+=("$@")
+                break
+                ;;
+              *)
+                if [[ -z "$repo_name" ]]; then
+                  repo_name="$1"
+                else
+                  extra_args+=("$1")
+                fi
+                ;;
+            esac
+            shift
+          done
+
+          if [[ -z "$repo_name" ]]; then
+            cat >&2 <<'EOF'
+Usage: mkgitrepo [--public|--private|--internal] <repo> [gh repo create flags...]
+EOF
+            return 1
+          fi
+
+          local local_name="''${repo_name:t}"
+          local workspace="$HOME/workspace"
+          local target="$workspace/$local_name"
+
+          if [[ -z "$local_name" || "$local_name" == "." || "$local_name" == ".." ]]; then
+            print -u2 "Invalid repository name: $repo_name"
+            return 1
+          fi
+
+          mkdir -p "$workspace"
+          mkdir "$target"
+          cd "$target"
+
+          # どこから起動しても、作業用のローカルrepoは~/workspace配下に作る。
+          git init
+          gh repo create "$repo_name" "$visibility" --source=. --remote=origin "''${extra_args[@]}"
+        }
+      '';
+
       shellAliases = {
         g = "git";
         vi = "nvim";
