@@ -84,6 +84,10 @@ EOF
       appId = "com.discordapp.Discord";
       origin = "flathub";
     }
+    {
+      appId = "org.kde.kdenlive";
+      origin = "flathub";
+    }
   ];
 
   environment.systemPackages = with pkgs; [
