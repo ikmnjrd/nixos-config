@@ -353,6 +353,7 @@ in
     "org/gnome/shell" = {
       enabled-extensions = [
         "kimpanel@kde.org"
+        "user-theme@gnome-shell-extensions.gcampax.github.com"
       ];
     };
     "org/gnome/mutter" = {

@@ -14,7 +14,8 @@
     };
     codex-desktop-linux.url = "github:ilysenko/codex-desktop-linux";
     claude-desktop.url = "github:aaddrick/claude-desktop-debian";
-    ywhisp.url = "path:/home/ike/workspace/ywhisp";
+    # ywhispは一時的に無効化。
+    # ywhisp.url = "path:/home/ike/workspace/ywhisp";
   };
 
   outputs = inputs@{ nixpkgs, nix-flatpak, home-manager, stylix, ... }:
@@ -56,21 +57,23 @@
           modules = [
             stylix.nixosModules.stylix
             nix-flatpak.nixosModules.nix-flatpak
-            inputs.ywhisp.nixosModules.ywhisp
+            # ywhispは一時的に無効化。
+            # inputs.ywhisp.nixosModules.ywhisp
             home-manager.nixosModules.home-manager
             ./hosts/legoship/configuration.nix
-            {
-              services.ywhisp = {
-                enable = true;
-                openFirewall = true;
-                enableGnomeExtension = true;
-                users = [ "ike" ];
-
-                certFile = "/home/ike/.config/ywhisp/certs/lan.pem";
-                keyFile = "/home/ike/.config/ywhisp/certs/lan-key.pem";
-                whisperModel = "/home/ike/.local/share/ywhisp/models/ggml-base.bin";
-              };
-            }
+            # ywhispは一時的に無効化。
+            # {
+            #   services.ywhisp = {
+            #     enable = true;
+            #     openFirewall = true;
+            #     enableGnomeExtension = true;
+            #     users = [ "ike" ];
+            #
+            #     certFile = "/home/ike/.config/ywhisp/certs/lan.pem";
+            #     keyFile = "/home/ike/.config/ywhisp/certs/lan-key.pem";
+            #     whisperModel = "/home/ike/.local/share/ywhisp/models/ggml-base.bin";
+            #   };
+            # }
             {
               home-manager = {
                 useGlobalPkgs = true;

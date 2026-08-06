@@ -93,11 +93,11 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1785621037,
-        "narHash": "sha256-9T3/l1/PrfpayWhXAAZNfxTfZ1gcgiYZ1Q2Q34iNkb4=",
+        "lastModified": 1785998960,
+        "narHash": "sha256-5TfmIK18fXUdD1GWz4wecNSR7j7B6TC22wuqcaWdt/0=",
         "owner": "ilysenko",
         "repo": "codex-desktop-linux",
-        "rev": "c4581195c2bfec50a271f59146f680b9a0ebdd03",
+        "rev": "f20d8252240f0ee9189faf118b0886c0a3d788a4",
         "type": "github"
       },
       "original": {
@@ -312,22 +312,6 @@
         "type": "github"
       }
     },
-    "nixpkgs_4": {
-      "locked": {
-        "lastModified": 1782959384,
-        "narHash": "sha256-xnJJk+ct+D2+wdRxj1wk36w5zV9RVESwRqcklPdt3fM=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "65179426c83bb3f6bc14898b42ea1c6f01d374b0",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixos-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nur": {
       "inputs": {
         "flake-parts": [
@@ -360,8 +344,7 @@
         "home-manager": "home-manager",
         "nix-flatpak": "nix-flatpak",
         "nixpkgs": "nixpkgs_3",
-        "stylix": "stylix",
-        "ywhisp": "ywhisp"
+        "stylix": "stylix"
       }
     },
     "stylix": {
@@ -490,21 +473,6 @@
         "owner": "tinted-theming",
         "repo": "base16-zed",
         "type": "github"
-      }
-    },
-    "ywhisp": {
-      "inputs": {
-        "nixpkgs": "nixpkgs_4"
-      },
-      "locked": {
-        "lastModified": 1783334531,
-        "narHash": "sha256-huI/my3XRSVqp37ixnslNQPMx/1NfeD6TFGdeE2NeQs=",
-        "path": "/home/ike/workspace/ywhisp",
-        "type": "path"
-      },
-      "original": {
-        "path": "/home/ike/workspace/ywhisp",
-        "type": "path"
       }
     }
   },

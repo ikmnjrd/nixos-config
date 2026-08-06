@@ -143,6 +143,7 @@
     gh
     git
     gnomeExtensions.kimpanel
+    gnomeExtensions.user-themes
     jq
     kdePackages.fcitx5-configtool
     ripgrep

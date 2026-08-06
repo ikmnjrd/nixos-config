@@ -32,9 +32,10 @@ sudo nixos-rebuild switch \
 共通のシステム設定は `hosts/common`、メインPC固有の設定は `hosts/legoship`、
 サブPC固有の設定は `hosts/nixos`、共通のユーザー環境は `home/ikd.nix`、
 メインPCのユーザー環境は `home/ike.nix` 以下を編集し、検証してから反映します。
-`./bin/nixos-config` はデフォルトで
-`legoship` を対象にします。サブPCを対象にする場合は
-`NIXOS_CONFIG_HOST=nixos` を付けます。
+`./bin/nixos-config` はデフォルトで現在のホスト名を対象にします。
+別ホストの構成を確認またはビルドする場合は `NIXOS_CONFIG_HOST=<host>` を
+付けます。`test` と `switch` は、対象ホスト名と現在のホスト名が一致する
+場合だけ実行できます。
 
 ```sh
 ./bin/nixos-config check
@@ -44,8 +45,8 @@ sudo nixos-rebuild switch \
 ```
 
 ```sh
-NIXOS_CONFIG_HOST=nixos ./bin/nixos-config check
-NIXOS_CONFIG_HOST=nixos ./bin/nixos-config build
+NIXOS_CONFIG_HOST=legoship ./bin/nixos-config check
+NIXOS_CONFIG_HOST=legoship ./bin/nixos-config build
 ```
 
 `test` は起動時のデフォルト世代を変更せず、一時的に構成を有効化します。

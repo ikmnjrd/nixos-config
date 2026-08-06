@@ -3,7 +3,8 @@
 set -euo pipefail
 
 root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-host="${NIXOS_CONFIG_HOST:-legoship}"
+current_host="$(hostname)"
+host="${NIXOS_CONFIG_HOST:-${current_host}}"
 flake="path:${root}#${host}"
 nix_flags=(--extra-experimental-features "nix-command flakes")
 if [[ -n "${NIX_CONFIG:-}" ]]; then
@@ -17,7 +18,7 @@ usage() {
 Usage: bin/nixos-config <command>
 
 Environment:
-  NIXOS_CONFIG_HOST  Host to manage; defaults to legoship
+  NIXOS_CONFIG_HOST  Host to manage; defaults to the current hostname
 
 Commands:
   sync-from-etc  Show differences and import /etc/nixos into this repository
@@ -65,23 +66,46 @@ sync_from_etc() {
   esac
 }
 
+ensure_host_exists() {
+  if [[ ! -d "${root}/hosts/${host}" ]]; then
+    echo "Unknown host '${host}': ${root}/hosts/${host} does not exist." >&2
+    exit 1
+  fi
+}
+
+ensure_local_activation_target() {
+  ensure_host_exists
+
+  if [[ "${host}" != "${current_host}" ]]; then
+    cat >&2 <<EOF
+Refusing to activate '${host}' on current host '${current_host}'.
+Set NIXOS_CONFIG_HOST=${current_host} or run this command on the target host.
+EOF
+    exit 1
+  fi
+}
+
 case "${1:-}" in
   sync-from-etc)
     sync_from_etc
     ;;
   check)
+    ensure_host_exists
     nix "${nix_flags[@]}" flake check "path:${root}"
     nix "${nix_flags[@]}" eval \
       "path:${root}#nixosConfigurations.${host}.config.system.build.toplevel.drvPath" \
       >/dev/null
     ;;
   build)
+    ensure_host_exists
     nixos-rebuild build --flake "${flake}"
     ;;
   test)
+    ensure_local_activation_target
     sudo nixos-rebuild test --flake "${flake}"
     ;;
   switch)
+    ensure_local_activation_target
     sudo nixos-rebuild switch --flake "${flake}"
     ;;
   help|-h|--help)
