@@ -578,11 +578,14 @@ in
         # 実用上使うprefixバインドを全角文字側にも複製する。
         # 全角の<と>は意図的に省いている。tmux標準の割り当てがセミコロン区切りの
         # サブコマンドを含む長いdisplay-menuで、ここに複製すると壊れやすい割に利用頻度が低い。
+        # 分割元paneのカレントディレクトリを新しいpaneにも引き継ぐ。
+        bind-key '"' split-window -c "#{pane_current_path}"
+        bind-key % split-window -h -c "#{pane_current_path}"
         bind-key ！ break-pane
-        bind-key ＂ split-window
+        bind-key ＂ split-window -c "#{pane_current_path}"
         bind-key ＃ list-buffers
         bind-key ＄ command-prompt -I "#S" { rename-session "%%" }
-        bind-key ％ split-window -h
+        bind-key ％ split-window -h -c "#{pane_current_path}"
         bind-key ＆ confirm-before -p "kill-window #W? (y/n)" kill-window
         bind-key ＇ command-prompt -T window-target -p index { select-window -t ":%%" }
         bind-key （ switch-client -p
