@@ -27,6 +27,30 @@ let
     exec "$HOME/.codex/packages/standalone/current/bin/codex" "$@"
   '';
 
+  gyazo = pkgs.writeShellApplication {
+    name = "gyazo";
+    runtimeInputs = with pkgs; [
+      coreutils
+      curl
+      gnome-screenshot
+      jq
+      libnotify
+      libsecret
+      wl-clipboard
+      xdg-utils
+    ];
+    text = builtins.readFile ./scripts/gyazo;
+  };
+
+  gyazoTokenSet = pkgs.writeShellApplication {
+    name = "gyazo-token-set";
+    runtimeInputs = with pkgs; [
+      libnotify
+      libsecret
+    ];
+    text = builtins.readFile ./scripts/gyazo-token-set;
+  };
+
   # 公式Linux版を日次で追従するupstreamのFHSパッケージを使う。
   claudeDesktopPackage =
     inputs.claude-desktop.packages.${pkgs.stdenv.hostPlatform.system}.default;
@@ -186,6 +210,8 @@ in
       # ターミナルでもcodexをstandalone本体へ橋渡しする(cliPackageと同一)。
       claudeDesktopPackage
       codexCli
+      gyazo
+      gyazoTokenSet
       openInNvim
     ];
 
@@ -393,6 +419,7 @@ in
       custom-keybindings = [
         "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/fcitx-english/"
         "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/fcitx-japanese/"
+        "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/gyazo/"
         "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/suspend/"
       ];
     };
@@ -406,6 +433,11 @@ in
       command = "${pkgs.fcitx5}/bin/fcitx5-remote -o";
       name = "Fcitx Japanese input";
     };
+    "org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/gyazo" = {
+      binding = "<Super><Shift>g";
+      command = "${gyazo}/bin/gyazo";
+      name = "Gyazo screenshot";
+    };
     "org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/suspend" = {
       binding = "<Super><Control>q";
       command = "systemctl suspend";
@@ -415,12 +447,19 @@ in
 
   services.espanso = {
     enable = true;
+    x11Support = false;
+    waylandSupport = true;
     package-wayland = espansoWayland;
     configs = { };
     matches = { };
   };
 
   systemd.user = {
+    services.espanso.Service = {
+      # Waylandセッション情報を取れない場合でも再起動ループに入らないようにする。
+      Restart = lib.mkForce "no";
+    };
+
     services.ai-tools-update = {
       Unit = {
         Description = "Update AI development tools";
@@ -579,11 +618,14 @@ in
         # 実用上使うprefixバインドを全角文字側にも複製する。
         # 全角の<と>は意図的に省いている。tmux標準の割り当てがセミコロン区切りの
         # サブコマンドを含む長いdisplay-menuで、ここに複製すると壊れやすい割に利用頻度が低い。
+        # 分割元paneのカレントディレクトリを新しいpaneにも引き継ぐ。
+        bind-key '"' split-window -c "#{pane_current_path}"
+        bind-key % split-window -h -c "#{pane_current_path}"
         bind-key ！ break-pane
-        bind-key ＂ split-window
+        bind-key ＂ split-window -c "#{pane_current_path}"
         bind-key ＃ list-buffers
         bind-key ＄ command-prompt -I "#S" { rename-session "%%" }
-        bind-key ％ split-window -h
+        bind-key ％ split-window -h -c "#{pane_current_path}"
         bind-key ＆ confirm-before -p "kill-window #W? (y/n)" kill-window
         bind-key ＇ command-prompt -T window-target -p index { select-window -t ":%%" }
         bind-key （ switch-client -p

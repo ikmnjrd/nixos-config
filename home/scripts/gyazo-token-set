@@ -1,0 +1,26 @@
+printf '%s' 'Gyazo access token: ' >&2
+if ! IFS= read -r -s access_token; then
+  printf '\n%s\n' 'アクセストークンを読み取れませんでした。' >&2
+  exit 1
+fi
+printf '\n' >&2
+
+if [ -z "$access_token" ]; then
+  printf '%s\n' 'アクセストークンが空です。' >&2
+  exit 1
+fi
+
+# トークンを引数や設定ファイルへ残さず、ログイン時に解除されるKeyringへ保存する。
+if ! printf '%s' "$access_token" |
+  secret-tool store \
+    --label='Gyazo API access token' \
+    service gyazo \
+    credential access-token; then
+  unset access_token
+  printf '%s\n' 'アクセストークンをGNOME Keyringへ保存できませんでした。' >&2
+  exit 1
+fi
+unset access_token
+
+notify-send 'Gyazo' 'アクセストークンをGNOME Keyringへ保存しました。' || true
+printf '%s\n' 'Gyazo access token saved.'

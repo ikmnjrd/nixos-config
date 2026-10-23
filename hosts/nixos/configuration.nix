@@ -27,6 +27,8 @@ in
 
   networking.hostName = "nixos"; # Define your hostname.
 
+  programs.steam.enable = true;
+
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users."ikd" = {
     isNormalUser = true;

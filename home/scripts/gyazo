@@ -1,0 +1,87 @@
+open_browser=false
+
+case "${1:-}" in
+  "")
+    ;;
+  --open)
+    open_browser=true
+    ;;
+  -h|--help)
+    cat <<'EOF'
+Usage: gyazo [--open]
+
+GNOMEで選択した範囲をGyazoへアップロードし、URLをクリップボードへコピーします。
+  --open  アップロード後にGyazoをブラウザーで開く
+EOF
+    exit 0
+    ;;
+  *)
+    printf '不明な引数です: %s\n' "$1" >&2
+    exit 2
+    ;;
+esac
+
+if [ "$#" -gt 1 ]; then
+  printf '%s\n' '引数は1つだけ指定できます。' >&2
+  exit 2
+fi
+
+notify_error() {
+  local message="$1"
+
+  printf 'Gyazo: %s\n' "$message" >&2
+  notify-send --urgency=critical 'Gyazo' "$message" || true
+}
+
+image_file="$(mktemp --suffix=.png)"
+trap 'rm -f "$image_file"' EXIT
+
+# キャンセル時はエラー通知を出さず、そのまま終了する。
+if ! gnome-screenshot -a -f "$image_file"; then
+  exit 0
+fi
+
+if [ ! -s "$image_file" ]; then
+  exit 0
+fi
+
+if ! access_token="$(secret-tool lookup service gyazo credential access-token)" ||
+  [ -z "$access_token" ]; then
+  notify_error 'アクセストークンがありません。gyazo-token-setを実行してください。'
+  exit 1
+fi
+
+# トークンをプロセス引数へ含めないため、HTTPヘッダーは標準入力からcurlへ渡す。
+if ! response="$(
+  printf 'Authorization: Bearer %s\n' "$access_token" |
+    curl \
+      --silent \
+      --show-error \
+      --fail-with-body \
+      --header @- \
+      --form "imagedata=@${image_file};type=image/png" \
+      'https://upload.gyazo.com/api/upload'
+)"; then
+  unset access_token
+  notify_error '画像のアップロードに失敗しました。'
+  exit 1
+fi
+unset access_token
+
+if ! permalink_url="$(
+  jq --raw-output --exit-status \
+    '.permalink_url | select(type == "string" and length > 0)' <<<"$response"
+)"; then
+  notify_error 'Gyazoから有効なURLが返されませんでした。'
+  exit 1
+fi
+
+printf '%s' "$permalink_url" | wl-copy
+notify-send 'Gyazo' 'URLをクリップボードへコピーしました。' || true
+
+if [ "$open_browser" = true ]; then
+  if ! xdg-open "$permalink_url" >/dev/null 2>&1; then
+    notify_error 'ブラウザーを開けませんでした。URLはクリップボードにあります。'
+    exit 1
+  fi
+fi

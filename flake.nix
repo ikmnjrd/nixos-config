@@ -30,7 +30,11 @@
           home-manager.nixosModules.home-manager
           ./hosts/nixos/configuration.nix
           ./hosts/nixos/repository.nix
-          ({ lib, ... }: {
+          ({ lib, pkgs, ... }: {
+            home-manager.backupCommand = pkgs.writeShellScript "home-manager-backup" ''
+              set -eu
+              ${pkgs.coreutils}/bin/mv --backup=numbered -- "$1" "$1.hm-backup"
+            '';
             nixpkgs = {
               config.allowUnfreePredicate = pkg:
                 builtins.elem (lib.getName pkg) [
@@ -43,7 +47,6 @@
             home-manager = {
               useGlobalPkgs = true;
               useUserPackages = true;
-              backupFileExtension = "hm-backup";
               users.ikd = import ./home/ikd.nix { inherit inputs; };
             };
           }

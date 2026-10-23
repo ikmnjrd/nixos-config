@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+set -euo pipefail
+export PATH=/run/current-system/sw/bin
+
+mode="${1:---check}"
+if [[ "$mode" != --check && "$mode" != --apply ]]; then
+  echo 'Usage: bash bin/ca-emergency-update [--check|--apply]' >&2
+  exit 1
+fi
+if [[ "$mode" == --apply && "$EUID" -ne 0 ]]; then
+  echo 'Run --apply with sudo.' >&2
+  exit 1
+fi
+
+source_bundle=/run/current-system/etc/ssl/certs/ca-certificates.crt
+workdir=$(mktemp -d)
+trap 'rm -rf -- "$workdir"' EXIT
+awk '
+  BEGIN { RS=""; ORS="\n\n" }
+  {
+    split($0, lines, "\n")
+    if (lines[1] !~ /^(Trusted for:|Rejected for:|-----BEGIN )/) {
+      blocked = (lines[1] == "Comodo AAA Services root" ||
+                 lines[1] == "emSign ECC Root CA - G3" ||
+                 lines[1] == "emSign Root CA - C1" ||
+                 lines[1] == "emSign ECC Root CA - C3")
+      if (blocked) print lines[1] > "/dev/stderr"
+    }
+    if (!blocked) print
+  }
+' "$source_bundle" > "$workdir/ca-bundle.crt"
+
+awk '
+  /^-----BEGIN (TRUSTED )?CERTIFICATE-----$/ { begins++ }
+  /^-----END (TRUSTED )?CERTIFICATE-----$/ { ends++ }
+  /^(Comodo AAA Services root|emSign ECC Root CA - G3|emSign Root CA - C1|emSign ECC Root CA - C3)$/ { bad=1 }
+  END { if (bad || begins < 100 || begins != ends) exit 1 }
+' "$workdir/ca-bundle.crt"
+echo 'CA bundle check passed (offline).'
+if [[ "$mode" == --check ]]; then
+  exit 0
+fi
+
+backup_dir=$(mktemp -d /var/lib/nixos-ca-emergency.XXXXXX)
+targets=(
+  /etc/ssl/certs/ca-certificates.crt
+  /etc/ssl/certs/ca-bundle.crt
+  /etc/pki/tls/certs/ca-bundle.crt
+)
+for target in "${targets[@]}"; do
+  cp --parents --dereference -- "$target" "$backup_dir/"
+done
+echo "Previous bundles saved in $backup_dir"
+for target in "${targets[@]}"; do
+  replacement=$(mktemp "${target}.XXXXXX")
+  install -m 0644 -- "$workdir/ca-bundle.crt" "$replacement"
+  mv -Tf -- "$replacement" "$target"
+done
+systemctl restart nix-daemon.service
+cmp -- "$workdir/ca-bundle.crt" /etc/ssl/certs/ca-certificates.crt
+echo 'Emergency CA bundles installed; nix-daemon restarted.'
