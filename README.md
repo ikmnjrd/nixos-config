@@ -32,9 +32,10 @@ sudo nixos-rebuild switch \
 共通のシステム設定は `hosts/common`、メインPC固有の設定は `hosts/legoship`、
 サブPC固有の設定は `hosts/nixos`、共通のユーザー環境は `home/ikd.nix`、
 メインPCのユーザー環境は `home/ike.nix` 以下を編集し、検証してから反映します。
-`./bin/nixos-config` はデフォルトで
-`legoship` を対象にします。サブPCを対象にする場合は
-`NIXOS_CONFIG_HOST=nixos` を付けます。
+`./bin/nixos-config` はデフォルトで現在のホスト名を対象にします。
+別ホストの構成を確認またはビルドする場合は `NIXOS_CONFIG_HOST=<host>` を
+付けます。`test` と `switch` は、対象ホスト名と現在のホスト名が一致する
+場合だけ実行できます。
 
 ```sh
 ./bin/nixos-config check
@@ -44,8 +45,8 @@ sudo nixos-rebuild switch \
 ```
 
 ```sh
-NIXOS_CONFIG_HOST=nixos ./bin/nixos-config check
-NIXOS_CONFIG_HOST=nixos ./bin/nixos-config build
+NIXOS_CONFIG_HOST=legoship ./bin/nixos-config check
+NIXOS_CONFIG_HOST=legoship ./bin/nixos-config build
 ```
 
 `test` は起動時のデフォルト世代を変更せず、一時的に構成を有効化します。
@@ -143,6 +144,30 @@ which -a claude codex
 
 ## ロールバック
 
+### CA秘密鍵漏洩への応急処置
+
+`bin/ca-emergency-update` は、CVE-2026-111943への対策として、現在のシステム用CAバンドルから `hosts/common/configuration.nix` で指定した4つのCAを除外します。
+この共通設定により、両ホストでOS更新後も除外を維持します。
+ダウンロードは行いません。
+OS更新前に信頼ストアを修正する必要がある場合、リポジトリのルートで実行します。
+
+```sh
+bash bin/ca-emergency-update --check
+sudo bash bin/ca-emergency-update --apply
+```
+
+`--check` はバンドルの生成・検査だけを行います。
+`--apply` は元ファイルを `/var/lib/nixos-ca-emergency.*` に退避し、システム用バンドル3か所を差し替えてNixデーモンを再起動します。
+末尾に `Emergency CA bundles installed; nix-daemon restarted.` と表示されれば完了です。
+エラー時はOS更新を開始せず、表示された退避先とエラーを確認してください。
+ブラウザ、コンテナ、アプリ独自の証明書ストアは対象外です。
+
+この差し替えは応急処置です。
+再起動や旧世代への切り戻しで元のバンドルに戻る可能性があるため、続けてCA対策を含む構成をビルド・適用してください。
+退避したバンドルを復元すると除外前の信頼状態に戻るため、通常の切り戻しには使用しません。
+
+### システム世代の切り戻し
+
 過去の世代を一覧表示し、以前の構成へ戻すには次を実行します。
 
 ```sh
@@ -166,6 +191,7 @@ fzf、batと開発用CLIをユーザー単位で管理する共通モジュー�
 `home/ike.nix` は同じ設定をメインPCの `/home/ike` に適用します。
 既存の管理対象ファイルと
 衝突した場合は、初回の有効化時に拡張子 `.hm-backup` で退避します。
+`nixos` の `ikd` では、既存の `.hm-backup` がある場合も連番付きのバックアップに保持し、有効化を継続します。
 
 ## Remote development host
 

@@ -312,22 +312,6 @@
         "type": "github"
       }
     },
-    "nixpkgs_4": {
-      "locked": {
-        "lastModified": 1782959384,
-        "narHash": "sha256-xnJJk+ct+D2+wdRxj1wk36w5zV9RVESwRqcklPdt3fM=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "65179426c83bb3f6bc14898b42ea1c6f01d374b0",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixos-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nur": {
       "inputs": {
         "flake-parts": [
@@ -360,8 +344,7 @@
         "home-manager": "home-manager",
         "nix-flatpak": "nix-flatpak",
         "nixpkgs": "nixpkgs_3",
-        "stylix": "stylix",
-        "ywhisp": "ywhisp"
+        "stylix": "stylix"
       }
     },
     "stylix": {
@@ -490,21 +473,6 @@
         "owner": "tinted-theming",
         "repo": "base16-zed",
         "type": "github"
-      }
-    },
-    "ywhisp": {
-      "inputs": {
-        "nixpkgs": "nixpkgs_4"
-      },
-      "locked": {
-        "lastModified": 1783334531,
-        "narHash": "sha256-huI/my3XRSVqp37ixnslNQPMx/1NfeD6TFGdeE2NeQs=",
-        "path": "/home/ike/workspace/ywhisp",
-        "type": "path"
-      },
-      "original": {
-        "path": "/home/ike/workspace/ywhisp",
-        "type": "path"
       }
     }
   },

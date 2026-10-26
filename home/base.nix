@@ -381,6 +381,7 @@ in
     "org/gnome/shell" = {
       enabled-extensions = [
         "kimpanel@kde.org"
+        "user-theme@gnome-shell-extensions.gcampax.github.com"
       ];
     };
     "org/gnome/mutter" = {
@@ -448,12 +449,19 @@ in
 
   services.espanso = {
     enable = true;
+    x11Support = false;
+    waylandSupport = true;
     package-wayland = espansoWayland;
     configs = { };
     matches = { };
   };
 
   systemd.user = {
+    services.espanso.Service = {
+      # Waylandセッション情報を取れない場合でも再起動ループに入らないようにする。
+      Restart = lib.mkForce "no";
+    };
+
     services.ai-tools-update = {
       Unit = {
         Description = "Update AI development tools";
