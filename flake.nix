@@ -21,6 +21,13 @@
   outputs = inputs@{ nixpkgs, nix-flatpak, home-manager, stylix, ... }:
     let
       system = "x86_64-linux";
+      # 既存のバックアップがあってもHome Managerの適用を継続できるようにする。
+      homeManagerBackup = { pkgs, ... }: {
+        home-manager.backupCommand = pkgs.writeShellScript "home-manager-backup" ''
+          set -eu
+          ${pkgs.coreutils}/bin/mv --backup=numbered -- "$1" "$1.hm-backup"
+        '';
+      };
 
       subPc = nixpkgs.lib.nixosSystem {
         inherit system;
@@ -28,13 +35,10 @@
           stylix.nixosModules.stylix
           nix-flatpak.nixosModules.nix-flatpak
           home-manager.nixosModules.home-manager
+          homeManagerBackup
           ./hosts/nixos/configuration.nix
           ./hosts/nixos/repository.nix
-          ({ lib, pkgs, ... }: {
-            home-manager.backupCommand = pkgs.writeShellScript "home-manager-backup" ''
-              set -eu
-              ${pkgs.coreutils}/bin/mv --backup=numbered -- "$1" "$1.hm-backup"
-            '';
+          ({ lib, ... }: {
             nixpkgs = {
               config.allowUnfreePredicate = pkg:
                 builtins.elem (lib.getName pkg) [
@@ -63,6 +67,7 @@
             # ywhispは一時的に無効化。
             # inputs.ywhisp.nixosModules.ywhisp
             home-manager.nixosModules.home-manager
+            homeManagerBackup
             ./hosts/legoship/configuration.nix
             # ywhispは一時的に無効化。
             # {
@@ -81,7 +86,6 @@
               home-manager = {
                 useGlobalPkgs = true;
                 useUserPackages = true;
-                backupFileExtension = "hm-backup";
                 users.ike = import ./home/ike.nix { inherit inputs; };
               };
             }
