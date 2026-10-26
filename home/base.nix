@@ -184,6 +184,8 @@ in
     ];
 
     sessionVariables = {
+      # proxy経由では組織設定の初期化がタイムアウトするため、デスクトップから直接起動する。
+      CODEX_REMOTE_CONTROL_APP_SERVER_MODE = lib.mkForce "direct";
       # Deno自体は固定したNixpkgs inputで更新する。
       DENO_NO_UPDATE_CHECK = "1";
       QT_IM_MODULE = "fcitx";
